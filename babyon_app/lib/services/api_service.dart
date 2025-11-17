@@ -5,6 +5,7 @@ import 'dart:io' show Platform;
 import 'dart:math';
 import '../models/job_posting.dart';
 import '../models/job_application.dart';
+import '../models/sitter_profile.dart';
 
 class ApiService {
   static final ApiService _instance = ApiService._internal();
@@ -491,6 +492,208 @@ class ApiService {
       await _dio.delete('/job-applications/$applicationId');
     } catch (e) {
       print('지원 철회 오류: $e');
+      rethrow;
+    }
+  }
+}
+
+  // ==================== 시터 프로필 API ====================
+
+  // 시터 프로필 조회
+  Future<SitterProfile> getSitterProfile(int sitterId) async {
+    try {
+      final response = await _dio.get('/sitter-profiles/$sitterId');
+      return SitterProfile.fromJson(response.data);
+    } catch (e) {
+      print('시터 프로필 조회 오류: $e');
+      rethrow;
+    }
+  }
+
+  // 시터 프로필 수정
+  Future<SitterProfile> updateSitterProfile({
+    required int sitterId,
+    String? profileImageUrl,
+    String? introduction,
+    List<String>? availableServiceTypes,
+    List<String>? preferredAgeGroups,
+    List<String>? languagesSpoken,
+    String? educationLevel,
+  }) async {
+    try {
+      final response = await _dio.put(
+        '/sitter-profiles/$sitterId',
+        data: {
+          if (profileImageUrl != null) 'profileImageUrl': profileImageUrl,
+          if (introduction != null) 'introduction': introduction,
+          if (availableServiceTypes != null) 'availableServiceTypes': availableServiceTypes,
+          if (preferredAgeGroups != null) 'preferredAgeGroups': preferredAgeGroups,
+          if (languagesSpoken != null) 'languagesSpoken': languagesSpoken,
+          if (educationLevel != null) 'educationLevel': educationLevel,
+        },
+      );
+      return SitterProfile.fromJson(response.data);
+    } catch (e) {
+      print('시터 프로필 수정 오류: $e');
+      rethrow;
+    }
+  }
+
+  // 시터 검색
+  Future<Map<String, dynamic>> searchSitterProfiles({
+    String? city,
+    String? district,
+    String? serviceType,
+    String? ageGroup,
+    double? minRating,
+    int? minExperienceYears,
+    double? maxHourlyRate,
+    String? dayOfWeek,
+    String sortBy = 'rating',
+    String sortDirection = 'desc',
+    int page = 0,
+    int size = 10,
+  }) async {
+    try {
+      final queryParams = {
+        if (city != null) 'city': city,
+        if (district != null) 'district': district,
+        if (serviceType != null) 'serviceType': serviceType,
+        if (ageGroup != null) 'ageGroup': ageGroup,
+        if (minRating != null) 'minRating': minRating,
+        if (minExperienceYears != null) 'minExperienceYears': minExperienceYears,
+        if (maxHourlyRate != null) 'maxHourlyRate': maxHourlyRate,
+        if (dayOfWeek != null) 'dayOfWeek': dayOfWeek,
+        'sortBy': sortBy,
+        'sortDirection': sortDirection,
+        'page': page,
+        'size': size,
+      };
+
+      final response = await _dio.get('/sitter-profiles/search', queryParameters: queryParams);
+
+      return {
+        'content': (response.data['content'] as List).map((json) => SitterProfile.fromJson(json)).toList(),
+        'totalPages': response.data['totalPages'],
+        'totalElements': response.data['totalElements'],
+        'number': response.data['number'],
+      };
+    } catch (e) {
+      print('시터 검색 오류: $e');
+      rethrow;
+    }
+  }
+
+  // 자격증 추가
+  Future<SitterCertification> addCertification({
+    required int sitterId,
+    required String certificationName,
+    String? issuedBy,
+    DateTime? issueDate,
+    DateTime? expiryDate,
+    String? certificateImageUrl,
+    String? description,
+  }) async {
+    try {
+      final response = await _dio.post(
+        '/sitter-profiles/$sitterId/certifications',
+        data: {
+          'certificationName': certificationName,
+          if (issuedBy != null) 'issuedBy': issuedBy,
+          if (issueDate != null) 'issueDate': issueDate.toIso8601String().split('T')[0],
+          if (expiryDate != null) 'expiryDate': expiryDate.toIso8601String().split('T')[0],
+          if (certificateImageUrl != null) 'certificateImageUrl': certificateImageUrl,
+          if (description != null) 'description': description,
+        },
+      );
+      return SitterCertification.fromJson(response.data);
+    } catch (e) {
+      print('자격증 추가 오류: $e');
+      rethrow;
+    }
+  }
+
+  // 경력 추가
+  Future<SitterExperience> addExperience({
+    required int sitterId,
+    String? companyName,
+    String? position,
+    required DateTime startDate,
+    DateTime? endDate,
+    bool? isCurrent,
+    String? description,
+    String? childrenAgeGroup,
+    int? numberOfChildren,
+  }) async {
+    try {
+      final response = await _dio.post(
+        '/sitter-profiles/$sitterId/experiences',
+        data: {
+          if (companyName != null) 'companyName': companyName,
+          if (position != null) 'position': position,
+          'startDate': startDate.toIso8601String().split('T')[0],
+          if (endDate != null) 'endDate': endDate.toIso8601String().split('T')[0],
+          if (isCurrent != null) 'isCurrent': isCurrent,
+          if (description != null) 'description': description,
+          if (childrenAgeGroup != null) 'childrenAgeGroup': childrenAgeGroup,
+          if (numberOfChildren != null) 'numberOfChildren': numberOfChildren,
+        },
+      );
+      return SitterExperience.fromJson(response.data);
+    } catch (e) {
+      print('경력 추가 오류: $e');
+      rethrow;
+    }
+  }
+
+  // 가능 시간대 추가
+  Future<SitterAvailableTime> addAvailableTime({
+    required int sitterId,
+    required String dayOfWeek,
+    required String startTime,
+    required String endTime,
+    bool? isFlexible,
+  }) async {
+    try {
+      final response = await _dio.post(
+        '/sitter-profiles/$sitterId/available-times',
+        data: {
+          'dayOfWeek': dayOfWeek,
+          'startTime': startTime,
+          'endTime': endTime,
+          if (isFlexible != null) 'isFlexible': isFlexible,
+        },
+      );
+      return SitterAvailableTime.fromJson(response.data);
+    } catch (e) {
+      print('가능 시간대 추가 오류: $e');
+      rethrow;
+    }
+  }
+
+  // 서비스 지역 추가
+  Future<SitterServiceArea> addServiceArea({
+    required int sitterId,
+    required String city,
+    String? district,
+    String? detailedArea,
+    int? travelDistanceKm,
+    bool? isPrimary,
+  }) async {
+    try {
+      final response = await _dio.post(
+        '/sitter-profiles/$sitterId/service-areas',
+        data: {
+          'city': city,
+          if (district != null) 'district': district,
+          if (detailedArea != null) 'detailedArea': detailedArea,
+          if (travelDistanceKm != null) 'travelDistanceKm': travelDistanceKm,
+          if (isPrimary != null) 'isPrimary': isPrimary,
+        },
+      );
+      return SitterServiceArea.fromJson(response.data);
+    } catch (e) {
+      print('서비스 지역 추가 오류: $e');
       rethrow;
     }
   }
