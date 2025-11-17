@@ -1,0 +1,46 @@
+version: '3.8'
+
+services:
+  db:
+    image: mysql:8.0
+    container_name: babyon-mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: tjdrhdgkwk1004^^
+      MYSQL_DATABASE: babyon_db
+    ports:
+      - "3307:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+    networks:
+      - babyon-network
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-uroot", "-pq123456789"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  backend:
+    build:
+      context: ./babyon
+      dockerfile: Dockerfile
+    container_name: babyon-backend
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:mysql://db:3306/babyon_db?useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true
+      SPRING_DATASOURCE_USERNAME: root
+      SPRING_DATASOURCE_PASSWORD: tjdrhdgkwk1004^^
+      SPRING_PROFILES_ACTIVE: secrets
+    ports:
+      - "8081:8085"
+    depends_on:
+      db:
+        condition: service_healthy
+    networks:
+      - babyon-network
+    restart: on-failure
+
+networks:
+  babyon-network:
+    driver: bridge
+
+volumes:
+  mysql_data:

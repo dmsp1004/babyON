@@ -1,0 +1,217 @@
+import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import '../providers/auth_provider.dart';
+import '../services/api_service.dart';
+
+class ParentHomeScreen extends StatelessWidget {
+  const ParentHomeScreen({Key? key}) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    final authProvider = Provider.of<AuthProvider>(context);
+    final apiService = ApiService();
+
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('부모 홈'),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.logout),
+            onPressed: () async {
+              await authProvider.logout();
+              if (context.mounted) {
+                Navigator.pushReplacementNamed(context, '/login');
+              }
+            },
+          ),
+        ],
+      ),
+      body: SingleChildScrollView(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            // 환영 메시지
+            Card(
+              elevation: 2,
+              child: Padding(
+                padding: const EdgeInsets.all(20.0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      '안녕하세요! 👋',
+                      style: Theme.of(context).textTheme.headlineSmall,
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      '${authProvider.email}님',
+                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                            color: Colors.blue,
+                          ),
+                    ),
+                    const SizedBox(height: 16),
+                    const Text('babyON과 함께 믿을 수 있는 시터를 찾아보세요.'),
+                  ],
+                ),
+              ),
+            ),
+            const SizedBox(height: 24),
+
+            // 메뉴 그리드
+            GridView.count(
+              crossAxisCount: 2,
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              mainAxisSpacing: 16,
+              crossAxisSpacing: 16,
+              children: [
+                _buildMenuCard(
+                  context,
+                  icon: Icons.add_circle,
+                  title: '구인 글 작성',
+                  subtitle: '새로운 시터 구인',
+                  color: Colors.blue,
+                  onTap: () {
+                    Navigator.pushNamed(context, '/create_job_posting');  // 수정
+                  },
+                ),
+                _buildMenuCard(
+                  context,
+                  icon: Icons.list_alt,
+                  title: '내 구인 글',
+                  subtitle: '작성한 글 관리',
+                  color: Colors.green,
+                  onTap: () {
+                    Navigator.pushNamed(context, '/my_job_postings');
+                  },
+                ),
+                _buildMenuCard(
+                  context,
+                  icon: Icons.people,
+                  title: '지원자 관리',
+                  subtitle: '받은 지원서 확인',
+                  color: Colors.orange,
+                  onTap: () {
+                    Navigator.pushNamed(context, '/job_application_list');
+                  },
+                ),
+                _buildMenuCard(
+                  context,
+                  icon: Icons.search,
+                  title: '시터 찾기',
+                  subtitle: '조건별 검색',
+                  color: Colors.purple,
+                  onTap: () {
+                    Navigator.pushNamed(context, '/job_posting_list');
+                  },
+                ),
+                _buildMenuCard(
+                  context,
+                  icon: Icons.favorite,
+                  title: '찜한 시터',
+                  subtitle: '관심 시터 목록',
+                  color: Colors.pink,
+                  onTap: () {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text('찜 기능은 곧 제공됩니다.')),
+                    );
+                  },
+                ),
+                _buildMenuCard(
+                  context,
+                  icon: Icons.history,
+                  title: '이용 내역',
+                  subtitle: '과거 매칭 기록',
+                  color: Colors.teal,
+                  onTap: () {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text('이용 내역 기능은 곧 제공됩니다.')),
+                    );
+                  },
+                ),
+              ],
+            ),
+            const SizedBox(height: 24),
+
+            // 최근 활동
+            Card(
+              elevation: 2,
+              child: Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        const Icon(Icons.notifications, color: Colors.blue),
+                        const SizedBox(width: 8),
+                        Text(
+                          '최근 활동',
+                          style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                                fontWeight: FontWeight.bold,
+                              ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 16),
+                    const Text('아직 활동 내역이 없습니다.'),
+                    const SizedBox(height: 8),
+                    const Text(
+                      '구인 글을 작성하여 시터를 찾아보세요!',
+                      style: TextStyle(color: Colors.grey),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildMenuCard(
+    BuildContext context, {
+    required IconData icon,
+    required String title,
+    required String subtitle,
+    required Color color,
+    required VoidCallback onTap,
+  }) {
+    return Card(
+      elevation: 2,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(8),
+        child: Padding(
+          padding: const EdgeInsets.all(16.0),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(icon, size: 48, color: color),
+              const SizedBox(height: 12),
+              Text(
+                title,
+                style: const TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                ),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 4),
+              Text(
+                subtitle,
+                style: TextStyle(
+                  fontSize: 12,
+                  color: Colors.grey[600],
+                ),
+                textAlign: TextAlign.center,
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}

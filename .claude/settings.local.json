@@ -1,0 +1,18 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(cat:*)",
+      "Bash(find:*)",
+      "Bash(touch:*)",
+      "Bash(printf:*)",
+      "Bash(/c/Users/user/IdeaProjects/babyON/CLAUDE.md)",
+      "Bash(git mv:*)",
+      "Bash(mv:*)",
+      "Bash(docker compose:*)",
+      "Bash(docker exec:*)",
+      "Bash(db-backups/test_backup.sql)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}

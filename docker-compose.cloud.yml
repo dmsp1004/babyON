@@ -1,0 +1,24 @@
+# Cloud DB를 사용하는 경우의 docker-compose 설정
+# 사용법: docker compose -f docker-compose.cloud.yml up
+
+services:
+  backend:
+    build:
+      context: ./babyon
+      dockerfile: Dockerfile
+    container_name: babyon-backend
+    environment:
+      # 클라우드 DB 주소로 변경 (예시)
+      SPRING_DATASOURCE_URL: jdbc:mysql://your-cloud-db.mysql.database.azure.com:3306/babyon_db?useSSL=true&serverTimezone=UTC&allowPublicKeyRetrieval=true
+      SPRING_DATASOURCE_USERNAME: your_username
+      SPRING_DATASOURCE_PASSWORD: your_password
+      SPRING_PROFILES_ACTIVE: secrets
+    ports:
+      - "8081:8085"
+    networks:
+      - babyon-network
+    restart: on-failure
+
+networks:
+  babyon-network:
+    driver: bridge

@@ -4,11 +4,10 @@
   <component name="GradleSettings">
     <option name="linkedExternalProjectsSettings">
       <GradleProjectSettings>
-        <option name="externalProjectPath" value="$PROJECT_DIR$/childcare" />
-        <option name="gradleJvm" value="17 (2)" />
+        <option name="externalProjectPath" value="$PROJECT_DIR$/babyon" />
         <option name="modules">
           <set>
-            <option value="$PROJECT_DIR$/childcare" />
+            <option value="$PROJECT_DIR$/babyon" />
           </set>
         </option>
       </GradleProjectSettings>

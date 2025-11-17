@@ -1,0 +1,32 @@
+# 1. Runner 환경 구성: Docker-in-Docker (dind) 서비스 활성화
+
+image: docker:24.0.5
+services:
+  - docker:24.0.5-dind
+
+# 2. 전영 변수 설정 (GitLab CI/CD Variables에도 동일하게 설정 필요)
+variables:
+  AIRFLOW_MODULE_PATH: "airflow"
+  AIRFLOW_VERSION: "3.1.0"
+  AWS_REGION: "ap-notheast-2"
+  ECR_REPOSITORY: "dx-datawarehouse-airflow"
+
+# 3. 단계(Stages) 정의
+stages:
+  - build_and_push
+
+# 4. Airflow Docker 빌드 및 ECR 푸시 Job
+airflow_build_andpush:
+  stage: build_and_push
+
+  # AWS CLI를 사용하여 ECR에 접근 (YAML 오류 수정을 위해 image를 단순 문자열로 변경)
+  image: amazon/aws-cli:latest
+
+  # 모듈 독립 배포 전략: airflow/ 경로 파일만 변경되었을 때 실행 (main 브랜치)
+  rules:
+    - if: $CI_COMMIT_BRANCH == "main"
+      chandges:
+        = "${AIRFLOW_MODULE_PATH}/**/*
+
+  script:
+    - echo "--- 1. Docker 빌드를 위해 Docker0in-

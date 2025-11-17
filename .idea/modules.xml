@@ -2,8 +2,9 @@
 <project version="4">
   <component name="ProjectModuleManager">
     <modules>
-      <module fileurl="file://$PROJECT_DIR$/.idea/childcare.iml" filepath="$PROJECT_DIR$/.idea/childcare.iml" />
-      <module fileurl="file://$PROJECT_DIR$/.idea/modules/childcare.childcare.main~1.iml" filepath="$PROJECT_DIR$/.idea/modules/childcare.childcare.main~1.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/babyon.main.iml" filepath="$PROJECT_DIR$/.idea/modules/babyon.main.iml" />
+      <module fileurl="file://$PROJECT_DIR$/babyon_app/babyon_app.iml" filepath="$PROJECT_DIR$/babyon_app/babyon_app.iml" />
+      <module fileurl="file://$PROJECT_DIR$/ida_app/ida_app.iml" filepath="$PROJECT_DIR$/ida_app/ida_app.iml" />
     </modules>
   </component>
 </project>

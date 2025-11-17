@@ -1,0 +1,31 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(./gradlew bootRun)",
+      "Bash(\"/c/Program Files/MySQL/MySQL Shell 8.0/bin/mysqlsh\" --sql -u root -ptjdrhdgkwk1004^^ -h localhost -P 3306 -D babyon_db -e \"\n-- 올바른 BCrypt 해시로 업데이트 (비밀번호: admin123, parent123, sitter123)\nUPDATE users SET password = ''$2a$10$dXJ3SW6G7P50lGmMkkmwe.20cQQubK3.HZWzG3YB1tlRy.fqvM/BG'' WHERE email = ''admin@babyon.com'';\nUPDATE users SET password = ''$2a$10$dXJ3SW6G7P50lGmMkkmwe.20cQQubK3.HZWzG3YB1tlRy.fqvM/BG'' WHERE email LIKE ''parent%@example.com'';\nUPDATE users SET password = ''$2a$10$dXJ3SW6G7P50lGmMkkmwe.20cQQubK3.HZWzG3YB1tlRy.fqvM/BG'' WHERE email LIKE ''sitter%@example.com'';\nSELECT email, LEFT(password, 60) as updated_hash FROM users WHERE email IN (''admin@babyon.com'', ''parent1@example.com'', ''sitter1@example.com'');\n\")",
+      "Bash(\"/c/Program Files/MySQL/MySQL Shell 8.0/bin/mysqlsh\" --sql -u root -ptjdrhdgkwk1004^^ -h localhost -P 3306 -D babyon_db -e \"SELECT id, email, password, role FROM users LIMIT 5;\")",
+      "Bash(\"/c/Program Files/MySQL/MySQL Shell 8.0/bin/mysqlsh\" --sql -u root -ptjdrhdgkwk1004^^ -h localhost -P 3306 -D babyon_db -e \"DESCRIBE users;\")",
+      "Bash(\"/c/Program Files/MySQL/MySQL Shell 8.0/bin/mysqlsh\" --sql -u root -ptjdrhdgkwk1004^^ -h localhost -P 3306 -D babyon_db -e \"SELECT id, email, LEFT(password, 70) as password_hash, user_type FROM users LIMIT 5;\")",
+      "Bash(\"/c/Program Files/MySQL/MySQL Shell 8.0/bin/mysqlsh\" --sql -u root -ptjdrhdgkwk1004^^ -h localhost -P 3306 -D babyon_db -e \"SELECT id, email, password FROM users WHERE email = ''admin@babyon.com'';\")",
+      "Bash(\"/c/Program Files/MySQL/MySQL Shell 8.0/bin/mysqlsh\" --sql -u root -ptjdrhdgkwk1004^^ -h localhost -P 3306 -D babyon_db -e \"UPDATE users SET password = ''$2a$10$N9qo8uLOickgx2ZMRZoMye7.Gu1hJLz9QDvEKmRdWQT8u2tBbFQdu'' WHERE email = ''admin@babyon.com'';\")",
+      "Bash(\"/c/Program Files/MySQL/MySQL Shell 8.0/bin/mysqlsh\" --sql -u root -ptjdrhdgkwk1004^^ -h localhost -P 3306 -D babyon_db -e \"UPDATE users SET password = ''$2a$10$N9qo8uLOickgx2ZMRZoMye7.Gu1hJLz9QDvEKmRdWQT8u2tBbFQdu'' WHERE email LIKE ''parent%@example.com'';\")",
+      "Bash(\"/c/Program Files/MySQL/MySQL Shell 8.0/bin/mysqlsh\" --sql -u root -ptjdrhdgkwk1004^^ -h localhost -P 3306 -D babyon_db -e \"UPDATE users SET password = ''$2a$10$N9qo8uLOickgx2ZMRZoMye7.Gu1hJLz9QDvEKmRdWQT8u2tBbFQdu'' WHERE email LIKE ''sitter%@example.com'';\")",
+      "Bash(\"/c/Program Files/MySQL/MySQL Shell 8.0/bin/mysqlsh\" --sql -u root -ptjdrhdgkwk1004^^ -h localhost -P 3306 -D babyon_db -e \"SELECT email, password FROM users WHERE email IN (''admin@babyon.com'', ''parent1@example.com'', ''sitter1@example.com'');\")",
+      "Bash(java:*)",
+      "Bash(where:*)",
+      "Bash(echo:*)",
+      "Bash(./gradlew:*)",
+      "Bash(find:*)",
+      "Bash(../babyon/src/main/resources/application.properties)",
+      "Bash(\"/c/Program Files/MySQL/MySQL Shell 8.0/bin/mysqlsh\" --sql -u root -ptjdrhdgkwk1004^^ -h localhost -P 3306 -D babyon_db -e \"SELECT DISTINCT job_type FROM job_postings;\")",
+      "Bash(tasklist:*)",
+      "Bash(\"/c/Program Files/MySQL/MySQL Shell 8.0/bin/mysqlsh\" --sql -u root -ptjdrhdgkwk1004^^ -h localhost -P 3306 -D babyon_db -e \"ALTER TABLE job_postings ADD COLUMN IF NOT EXISTS pay_type VARCHAR(20) DEFAULT ''HOURLY'';\")",
+      "Bash(\"/c/Program Files/MySQL/MySQL Shell 8.0/bin/mysqlsh\" --sql -u root -ptjdrhdgkwk1004^^ -h localhost -P 3306 -D babyon_db -e \"ALTER TABLE job_postings ADD COLUMN pay_type VARCHAR(20) DEFAULT ''HOURLY'' AFTER hourly_rate;\")",
+      "Bash(\"/c/Program Files/MySQL/MySQL Shell 8.0/bin/mysqlsh\" --sql -u root -ptjdrhdgkwk1004^^ -h localhost -P 3306 -D babyon_db -e \"UPDATE job_postings SET pay_type = ''HOURLY'' WHERE pay_type IS NULL;\")",
+      "Bash(python:*)",
+      "Bash(git add:*)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}

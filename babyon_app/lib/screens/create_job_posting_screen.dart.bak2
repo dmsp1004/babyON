@@ -1,0 +1,409 @@
+import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
+import '../services/api_service.dart';
+import '../models/job_posting.dart';
+
+class CreateJobPostingScreen extends StatefulWidget {
+  const CreateJobPostingScreen({Key? key}) : super(key: key);
+
+  @override
+  State<CreateJobPostingScreen> createState() => _CreateJobPostingScreenState();
+}
+
+class _CreateJobPostingScreenState extends State<CreateJobPostingScreen> {
+  final _formKey = GlobalKey<FormState>();
+  final ApiService _apiService = ApiService();
+
+  // Form controllers
+  final TextEditingController _titleController = TextEditingController();
+  final TextEditingController _descriptionController = TextEditingController();
+  final TextEditingController _locationController = TextEditingController();
+  final TextEditingController _hourlyRateController = TextEditingController();
+  final TextEditingController _ageOfChildrenController = TextEditingController();
+  final TextEditingController _numberOfChildrenController = TextEditingController();
+
+  DateTime? _startDate;
+  DateTime? _endDate;
+  String _jobType = 'REGULAR_CARE';
+  int _requiredExperienceYears = 0;
+  bool _isSubmitting = false;
+
+  final List<Map<String, dynamic>> _jobTypes = [
+    {'value': 'REGULAR_CARE', 'label': '정기 돌봄'},
+    {'value': 'SCHOOL_ESCORT', 'label': '등하원 도우미'},
+    {'value': 'ONE_TIME', 'label': '일회성 돌봄'},
+    {'value': 'EMERGENCY', 'label': '긴급 돌봄'},
+    {'value': 'TEMPORARY', 'label': '임시 돌봄'},
+  ];
+
+  @override
+  void dispose() {
+    _titleController.dispose();
+    _descriptionController.dispose();
+    _locationController.dispose();
+    _hourlyRateController.dispose();
+    _ageOfChildrenController.dispose();
+    _numberOfChildrenController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _selectDate(BuildContext context, bool isStartDate) async {
+    final DateTime? picked = await showDatePicker(
+      context: context,
+      initialDate: DateTime.now(),
+      firstDate: DateTime.now(),
+      lastDate: DateTime.now().add(const Duration(days: 365)),
+    );
+
+    if (picked != null) {
+      final TimeOfDay? timePicked = await showTimePicker(
+        context: context,
+        initialTime: TimeOfDay.now(),
+      );
+
+      if (timePicked != null) {
+        final DateTime combined = DateTime(
+          picked.year,
+          picked.month,
+          picked.day,
+          timePicked.hour,
+          timePicked.minute,
+        );
+
+        setState(() {
+          if (isStartDate) {
+            _startDate = combined;
+          } else {
+            _endDate = combined;
+          }
+        });
+      }
+    }
+  }
+
+  String _formatDateTime(DateTime? dateTime) {
+    if (dateTime == null) return '날짜를 선택하세요';
+    return DateFormat('yyyy-MM-dd HH:mm').format(dateTime);
+  }
+
+  Future<void> _submitForm() async {
+    if (!_formKey.currentState!.validate()) {
+      return;
+    }
+
+    if (_startDate == null || _endDate == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('시작 날짜와 종료 날짜를 모두 선택해주세요.'),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return;
+    }
+
+    if (_endDate!.isBefore(_startDate!)) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('종료 날짜는 시작 날짜 이후여야 합니다.'),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return;
+    }
+
+    setState(() {
+      _isSubmitting = true;
+    });
+
+    try {
+      final jobPosting = await _apiService.createJobPosting(
+        title: _titleController.text.trim(),
+        description: _descriptionController.text.trim(),
+        location: _locationController.text.trim(),
+        startDate: _startDate!,
+        endDate: _endDate!,
+        hourlyRate: double.parse(_hourlyRateController.text),
+        requiredExperienceYears: _requiredExperienceYears,
+        jobType: _jobType,
+        ageOfChildren: _ageOfChildrenController.text.trim(),
+        numberOfChildren: int.parse(_numberOfChildrenController.text),
+      );
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('구인글이 성공적으로 등록되었습니다.'),
+            backgroundColor: Colors.green,
+          ),
+        );
+        Navigator.pop(context, true); // 성공 신호와 함께 돌아가기
+      }
+    } catch (e) {
+      print('구인글 작성 오류: $e');
+      if (mounted) {
+        setState(() {
+          _isSubmitting = false;
+        });
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('구인글 작성에 실패했습니다: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('구인글 작성'),
+        elevation: 0,
+      ),
+      body: SingleChildScrollView(
+        padding: const EdgeInsets.all(16.0),
+        child: Form(
+          key: _formKey,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              // 제목 입력
+              TextFormField(
+                controller: _titleController,
+                decoration: const InputDecoration(
+                  labelText: '제목',
+                  hintText: '예: 평일 오후 시터 구합니다',
+                  prefixIcon: Icon(Icons.title),
+                ),
+                validator: (value) {
+                  if (value == null || value.trim().isEmpty) {
+                    return '제목을 입력해주세요.';
+                  }
+                  if (value.trim().length < 5) {
+                    return '제목은 최소 5자 이상이어야 합니다.';
+                  }
+                  return null;
+                },
+                maxLength: 100,
+              ),
+              const SizedBox(height: 16),
+
+              // 구인 유형 선택
+              DropdownButtonFormField<String>(
+                value: _jobType,
+                decoration: const InputDecoration(
+                  labelText: '구인 유형',
+                  prefixIcon: Icon(Icons.category),
+                ),
+                items: _jobTypes.map((type) {
+                  return DropdownMenuItem<String>(
+                    value: type['value'],
+                    child: Text(type['label']),
+                  );
+                }).toList(),
+                onChanged: (value) {
+                  if (value != null) {
+                    setState(() {
+                      _jobType = value;
+                    });
+                  }
+                },
+              ),
+              const SizedBox(height: 16),
+
+              // 위치 입력
+              TextFormField(
+                controller: _locationController,
+                decoration: const InputDecoration(
+                  labelText: '위치',
+                  hintText: '예: 서울시 강남구',
+                  prefixIcon: Icon(Icons.location_on),
+                ),
+                validator: (value) {
+                  if (value == null || value.trim().isEmpty) {
+                    return '위치를 입력해주세요.';
+                  }
+                  return null;
+                },
+                maxLength: 100,
+              ),
+              const SizedBox(height: 16),
+
+              // 시급 입력
+              TextFormField(
+                controller: _hourlyRateController,
+                decoration: const InputDecoration(
+                  labelText: '시급 (원)',
+                  hintText: '예: 15000',
+                  prefixIcon: Icon(Icons.attach_money),
+                ),
+                keyboardType: TextInputType.number,
+                validator: (value) {
+                  if (value == null || value.trim().isEmpty) {
+                    return '시급을 입력해주세요.';
+                  }
+                  final rate = double.tryParse(value);
+                  if (rate == null || rate <= 0) {
+                    return '올바른 시급을 입력해주세요.';
+                  }
+                  return null;
+                },
+              ),
+              const SizedBox(height: 16),
+
+              // 시작 날짜/시간 선택
+              InkWell(
+                onTap: () => _selectDate(context, true),
+                child: InputDecorator(
+                  decoration: const InputDecoration(
+                    labelText: '시작 날짜/시간',
+                    prefixIcon: Icon(Icons.calendar_today),
+                  ),
+                  child: Text(
+                    _formatDateTime(_startDate),
+                    style: TextStyle(
+                      color: _startDate == null ? Colors.grey : Colors.black,
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 16),
+
+              // 종료 날짜/시간 선택
+              InkWell(
+                onTap: () => _selectDate(context, false),
+                child: InputDecorator(
+                  decoration: const InputDecoration(
+                    labelText: '종료 날짜/시간',
+                    prefixIcon: Icon(Icons.calendar_today),
+                  ),
+                  child: Text(
+                    _formatDateTime(_endDate),
+                    style: TextStyle(
+                      color: _endDate == null ? Colors.grey : Colors.black,
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 16),
+
+              // 필요 경력 선택
+              DropdownButtonFormField<int>(
+                value: _requiredExperienceYears,
+                decoration: const InputDecoration(
+                  labelText: '필요 경력 (년)',
+                  prefixIcon: Icon(Icons.work),
+                ),
+                items: List.generate(11, (index) => index).map((years) {
+                  return DropdownMenuItem<int>(
+                    value: years,
+                    child: Text(years == 0 ? '경력 무관' : '$years년 이상'),
+                  );
+                }).toList(),
+                onChanged: (value) {
+                  if (value != null) {
+                    setState(() {
+                      _requiredExperienceYears = value;
+                    });
+                  }
+                },
+              ),
+              const SizedBox(height: 16),
+
+              // 아이 나이 입력
+              TextFormField(
+                controller: _ageOfChildrenController,
+                decoration: const InputDecoration(
+                  labelText: '아이 나이',
+                  hintText: '예: 3세, 5세',
+                  prefixIcon: Icon(Icons.child_care),
+                ),
+                validator: (value) {
+                  if (value == null || value.trim().isEmpty) {
+                    return '아이 나이를 입력해주세요.';
+                  }
+                  return null;
+                },
+                maxLength: 50,
+              ),
+              const SizedBox(height: 16),
+
+              // 아이 수 입력
+              TextFormField(
+                controller: _numberOfChildrenController,
+                decoration: const InputDecoration(
+                  labelText: '아이 수',
+                  hintText: '예: 2',
+                  prefixIcon: Icon(Icons.people),
+                ),
+                keyboardType: TextInputType.number,
+                validator: (value) {
+                  if (value == null || value.trim().isEmpty) {
+                    return '아이 수를 입력해주세요.';
+                  }
+                  final count = int.tryParse(value);
+                  if (count == null || count <= 0) {
+                    return '올바른 아이 수를 입력해주세요.';
+                  }
+                  return null;
+                },
+              ),
+              const SizedBox(height: 16),
+
+              // 상세 설명 입력
+              TextFormField(
+                controller: _descriptionController,
+                decoration: const InputDecoration(
+                  labelText: '상세 설명',
+                  hintText: '아이 돌봄에 대한 자세한 내용을 입력해주세요',
+                  prefixIcon: Icon(Icons.description),
+                  alignLabelWithHint: true,
+                ),
+                maxLines: 5,
+                validator: (value) {
+                  if (value == null || value.trim().isEmpty) {
+                    return '상세 설명을 입력해주세요.';
+                  }
+                  if (value.trim().length < 10) {
+                    return '상세 설명은 최소 10자 이상이어야 합니다.';
+                  }
+                  return null;
+                },
+                maxLength: 1000,
+              ),
+              const SizedBox(height: 24),
+
+              // 제출 버튼
+              ElevatedButton(
+                onPressed: _isSubmitting ? null : _submitForm,
+                style: ElevatedButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(vertical: 16),
+                  backgroundColor: Colors.blue,
+                ),
+                child: _isSubmitting
+                    ? const SizedBox(
+                        height: 20,
+                        width: 20,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                        ),
+                      )
+                    : const Text(
+                        '구인글 등록',
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.white,
+                        ),
+                      ),
+              ),
+              const SizedBox(height: 16),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}

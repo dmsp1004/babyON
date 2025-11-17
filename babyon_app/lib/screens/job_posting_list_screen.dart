@@ -1,0 +1,531 @@
+import 'package:flutter/material.dart';
+import '../services/api_service.dart';
+import '../models/job_posting.dart';
+
+class JobPostingListScreen extends StatefulWidget {
+  final bool onlyMyPostings;
+
+  const JobPostingListScreen({Key? key, this.onlyMyPostings = false}) : super(key: key);
+
+  @override
+  State<JobPostingListScreen> createState() => _JobPostingListScreenState();
+}
+
+class _JobPostingListScreenState extends State<JobPostingListScreen> {
+  final ApiService _apiService = ApiService();
+  final TextEditingController _keywordController = TextEditingController();
+  final TextEditingController _locationController = TextEditingController();
+  final ScrollController _scrollController = ScrollController();
+
+  List<JobPosting> _jobPostings = [];
+  bool _isLoading = false;
+  bool _hasError = false;
+  String _errorMessage = '';
+  int _currentPage = 0;
+  int _totalPages = 0;
+  bool _isLoadingMore = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadJobPostings();
+    _scrollController.addListener(_onScroll);
+  }
+
+  @override
+  void dispose() {
+    _keywordController.dispose();
+    _locationController.dispose();
+    _scrollController.dispose();
+    super.dispose();
+  }
+
+  void _onScroll() {
+    if (_scrollController.position.pixels ==
+        _scrollController.position.maxScrollExtent) {
+      if (!_isLoadingMore && _currentPage < _totalPages - 1) {
+        _loadMoreJobPostings();
+      }
+    }
+  }
+
+  Future<void> _loadJobPostings() async {
+    setState(() {
+      _isLoading = true;
+      _hasError = false;
+      _errorMessage = '';
+      _currentPage = 0;
+      _jobPostings = [];
+    });
+
+    try {
+      final result = widget.onlyMyPostings
+          ? await _apiService.getMyJobPostings(
+              page: 0,
+              size: 10,
+            )
+          : await _apiService.fetchJobPostings(
+              page: 0,
+              size: 10,
+              keyword: _keywordController.text.isEmpty
+                  ? null
+                  : _keywordController.text,
+              location: _locationController.text.isEmpty
+                  ? null
+                  : _locationController.text,
+            );
+
+      setState(() {
+        _jobPostings =
+            List<JobPosting>.from(result['content'] as List<JobPosting>);
+        _totalPages = result['totalPages'] as int;
+        _currentPage = result['number'] as int;
+        _isLoading = false;
+      });
+    } catch (e) {
+      setState(() {
+        _isLoading = false;
+        _hasError = true;
+        _errorMessage = e.toString();
+      });
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('오류: ${e.toString()}'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
+  }
+
+  Future<void> _loadMoreJobPostings() async {
+    if (_isLoadingMore || _currentPage >= _totalPages - 1) return;
+
+    setState(() {
+      _isLoadingMore = true;
+    });
+
+    try {
+      final result = widget.onlyMyPostings
+          ? await _apiService.getMyJobPostings(
+              page: _currentPage + 1,
+              size: 10,
+            )
+          : await _apiService.fetchJobPostings(
+              page: _currentPage + 1,
+              size: 10,
+              keyword: _keywordController.text.isEmpty
+                  ? null
+                  : _keywordController.text,
+              location: _locationController.text.isEmpty
+                  ? null
+                  : _locationController.text,
+            );
+
+      setState(() {
+        _jobPostings.addAll(result['content'] as List<JobPosting>);
+        _currentPage = result['number'] as int;
+        _isLoadingMore = false;
+      });
+    } catch (e) {
+      setState(() {
+        _isLoadingMore = false;
+      });
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('더 불러오기 실패: ${e.toString()}'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
+  }
+
+  void _handleSearch() {
+    _loadJobPostings();
+  }
+
+  void _clearSearch() {
+    _keywordController.clear();
+    _locationController.clear();
+    _loadJobPostings();
+  }
+
+  Color _getJobTypeColor(String jobType) {
+    switch (jobType) {
+      case 'REGULAR_CARE':
+        return Colors.blue;
+      case 'SCHOOL_ESCORT':
+        return Colors.green;
+      case 'ONE_TIME':
+        return Colors.orange;
+      case 'EMERGENCY':
+        return Colors.red;
+      default:
+        return Colors.grey;
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: Text(widget.onlyMyPostings ? '내 구인 글 목록' : '구인 글 목록'),
+        elevation: 0,
+      ),
+      body: RefreshIndicator(
+        onRefresh: _loadJobPostings,
+        child: Column(
+          children: [
+            // Search Bar (only show for all postings view)
+            if (!widget.onlyMyPostings)
+              Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: Column(
+                  children: [
+                  TextField(
+                    controller: _keywordController,
+                    decoration: InputDecoration(
+                      hintText: '직책이나 직무로 검색',
+                      prefixIcon: const Icon(Icons.search),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      contentPadding: const EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 12,
+                      ),
+                    ),
+                    onChanged: (_) => setState(() {}),
+                  ),
+                  const SizedBox(height: 12),
+                  TextField(
+                    controller: _locationController,
+                    decoration: InputDecoration(
+                      hintText: '지역으로 검색',
+                      prefixIcon: const Icon(Icons.location_on),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      contentPadding: const EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 12,
+                      ),
+                    ),
+                    onChanged: (_) => setState(() {}),
+                  ),
+                  const SizedBox(height: 12),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: ElevatedButton.icon(
+                          onPressed: _handleSearch,
+                          icon: const Icon(Icons.search),
+                          label: const Text('검색'),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.blue,
+                            foregroundColor: Colors.white,
+                            padding: const EdgeInsets.symmetric(vertical: 12),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: OutlinedButton.icon(
+                          onPressed: _clearSearch,
+                          icon: const Icon(Icons.clear),
+                          label: const Text('초기화'),
+                          style: OutlinedButton.styleFrom(
+                            padding: const EdgeInsets.symmetric(vertical: 12),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+            // Content
+            Expanded(
+              child: _buildContent(),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildContent() {
+    if (_isLoading) {
+      return const Center(
+        child: CircularProgressIndicator(),
+      );
+    }
+
+    if (_hasError && _jobPostings.isEmpty) {
+      return Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const Icon(
+              Icons.error_outline,
+              size: 64,
+              color: Colors.red,
+            ),
+            const SizedBox(height: 16),
+            Text(
+              '오류 발생',
+              style: Theme.of(context).textTheme.titleLarge,
+            ),
+            const SizedBox(height: 8),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 32),
+              child: Text(
+                _errorMessage,
+                textAlign: TextAlign.center,
+                style: Theme.of(context).textTheme.bodyMedium,
+              ),
+            ),
+            const SizedBox(height: 24),
+            ElevatedButton(
+              onPressed: _loadJobPostings,
+              child: const Text('다시 시도'),
+            ),
+          ],
+        ),
+      );
+    }
+
+    if (_jobPostings.isEmpty) {
+      return Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const Icon(
+              Icons.inbox_outlined,
+              size: 64,
+              color: Colors.grey,
+            ),
+            const SizedBox(height: 16),
+            Text(
+              '구인 글이 없습니다',
+              style: Theme.of(context).textTheme.titleLarge,
+            ),
+            const SizedBox(height: 8),
+            Text(
+              '검색 조건을 변경하여 다시 시도해주세요',
+              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                    color: Colors.grey,
+                  ),
+            ),
+            const SizedBox(height: 24),
+            ElevatedButton(
+              onPressed: _clearSearch,
+              child: const Text('검색 조건 초기화'),
+            ),
+          ],
+        ),
+      );
+    }
+
+    return ListView.builder(
+      controller: _scrollController,
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      itemCount: _jobPostings.length + (_isLoadingMore ? 1 : 0),
+      itemBuilder: (context, index) {
+        if (index == _jobPostings.length) {
+          return const Padding(
+            padding: EdgeInsets.symmetric(vertical: 16),
+            child: Center(
+              child: CircularProgressIndicator(),
+            ),
+          );
+        }
+
+        final posting = _jobPostings[index];
+        return _buildJobPostingCard(posting);
+      },
+    );
+  }
+
+  Widget _buildJobPostingCard(JobPosting posting) {
+    return Card(
+      margin: const EdgeInsets.symmetric(vertical: 8),
+      elevation: 2,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(12),
+        onTap: () {
+          Navigator.pushNamed(
+            context,
+            '/job_posting_detail',
+            arguments: posting.id,
+          );
+        },
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Title and Job Type Badge
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          posting.title,
+                          style:
+                              Theme.of(context).textTheme.titleMedium?.copyWith(
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 6,
+                    ),
+                    decoration: BoxDecoration(
+                      color: _getJobTypeColor(posting.jobType),
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                    child: Text(
+                      posting.jobTypeKorean,
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 12,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 12),
+              // Location
+              Row(
+                children: [
+                  const Icon(
+                    Icons.location_on_outlined,
+                    size: 16,
+                    color: Colors.grey,
+                  ),
+                  const SizedBox(width: 6),
+                  Expanded(
+                    child: Text(
+                      posting.location,
+                      style: Theme.of(context).textTheme.bodySmall,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 8),
+              // Hourly Rate
+              Row(
+                children: [
+                  const Icon(
+                    Icons.attach_money_outlined,
+                    size: 16,
+                    color: Colors.green,
+                  ),
+                  const SizedBox(width: 6),
+                  Text(
+                    posting.hourlyRateFormatted,
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                          color: Colors.green,
+                          fontWeight: FontWeight.bold,
+                        ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 8),
+              // Number of Children
+              Row(
+                children: [
+                  const Icon(
+                    Icons.child_care,
+                    size: 16,
+                    color: Color(0xFFFF6F00),
+                  ),
+                  const SizedBox(width: 6),
+                  Text(
+                    '아이 ${posting.numberOfChildren ?? 0}명',
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                          color: const Color(0xFFFF6F00),
+                          fontWeight: FontWeight.w500,
+                        ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 8),
+              // Date Range
+              Row(
+                children: [
+                  const Icon(
+                    Icons.calendar_today_outlined,
+                    size: 16,
+                    color: Colors.grey,
+                  ),
+                  const SizedBox(width: 6),
+                  Expanded(
+                    child: Text(
+                      posting.dateRangeFormatted,
+                      style: Theme.of(context).textTheme.bodySmall,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 12),
+              // Footer: Description preview and application count
+              Row(
+                children: [
+                  Expanded(
+                    child: Text(
+                      posting.description,
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                            color: Colors.grey,
+                          ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 8,
+                      vertical: 4,
+                    ),
+                    decoration: BoxDecoration(
+                      color: Colors.blue.withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Text(
+                      '지원 ${posting.applicationCount ?? 0}',
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                            color: Colors.blue,
+                            fontWeight: FontWeight.bold,
+                          ),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
