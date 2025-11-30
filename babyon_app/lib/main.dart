@@ -21,6 +21,7 @@ import 'screens/job_application_list_screen.dart';
 import 'screens/create_job_application_screen.dart';
 import 'screens/create_job_posting_screen.dart';
 import 'screens/edit_job_posting_screen.dart';
+import 'screens/sitter_profile_edit_screen.dart';
 import 'models/job_posting.dart';
 
 
@@ -189,6 +190,7 @@ class MyApp extends StatelessWidget {
                 '/my_applications':
                     (context) =>
                         const JobApplicationListScreen(myApplications: true),
+                '/sitter_profile_edit': (context) => const SitterProfileEditScreen(),
 
                 // OAuth 콜백 및 비밀번호 찾기 화면은 임시로 제거 (구현 필요)
                 // '/oauth/callback': (context) => const OAuthCallbackScreen(),

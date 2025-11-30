@@ -98,18 +98,34 @@ class _SitterHomeScreenState extends State<SitterHomeScreen> {
                         ),
                   ),
                   const SizedBox(height: 12),
-                  SizedBox(
-                    width: double.infinity,
-                    child: OutlinedButton.icon(
-                      onPressed: () {
-                        Navigator.pushNamed(context, '/my_applications');
-                      },
-                      icon: const Icon(Icons.work_outline, size: 18),
-                      label: const Text('내 지원 내역'),
-                      style: OutlinedButton.styleFrom(
-                        padding: const EdgeInsets.symmetric(vertical: 12),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: OutlinedButton.icon(
+                          onPressed: () {
+                            Navigator.pushNamed(context, '/sitter_profile_edit');
+                          },
+                          icon: const Icon(Icons.person_outline, size: 18),
+                          label: const Text('내 프로필'),
+                          style: OutlinedButton.styleFrom(
+                            padding: const EdgeInsets.symmetric(vertical: 12),
+                          ),
+                        ),
                       ),
-                    ),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: OutlinedButton.icon(
+                          onPressed: () {
+                            Navigator.pushNamed(context, '/my_applications');
+                          },
+                          icon: const Icon(Icons.work_outline, size: 18),
+                          label: const Text('내 지원 내역'),
+                          style: OutlinedButton.styleFrom(
+                            padding: const EdgeInsets.symmetric(vertical: 12),
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
                 ],
               ),
