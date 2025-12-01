@@ -6,6 +6,7 @@ import com.babyon.childcare.security.CustomAuthenticationProvider;
 import com.babyon.childcare.security.JwtAuthenticationFilter;
 import com.babyon.childcare.util.JwtUtil;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Lazy;
@@ -21,6 +22,7 @@ import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 import java.util.Arrays;
+import java.util.List;
 
 @Configuration
 @EnableWebSecurity
@@ -31,6 +33,9 @@ public class SecurityConfig {
     private UserDetailsService userDetailsService;
     private final CustomOAuth2UserService customOAuth2UserService;
     private final OAuth2SuccessHandler oAuth2SuccessHandler;
+
+    @Value("${app.cors.allowed-origins}")
+    private String allowedOriginsString;
 
     @Autowired
     public SecurityConfig(JwtUtil jwtUtil,
@@ -88,15 +93,13 @@ public class SecurityConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
-        // 모든 localhost 포트 허용 (Flutter 웹 개발용)
-        configuration.setAllowedOriginPatterns(Arrays.asList(
-                "http://localhost:*",
-                "http://127.0.0.1:*",
-                "http://localhost:3000",
-                "http://localhost:8080"
-        ));
+
+        // 환경 변수에서 허용된 origins 읽기 (쉼표로 구분)
+        List<String> allowedOrigins = Arrays.asList(allowedOriginsString.split(","));
+        configuration.setAllowedOrigins(allowedOrigins);
+
         configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"));
-        configuration.setAllowedHeaders(Arrays.asList("*"));
+        configuration.setAllowedHeaders(Arrays.asList("Authorization", "Content-Type", "Accept"));
         configuration.setAllowCredentials(true); // 인증 정보 허용
         configuration.setMaxAge(3600L);
         configuration.setExposedHeaders(Arrays.asList("Authorization", "Content-Type"));

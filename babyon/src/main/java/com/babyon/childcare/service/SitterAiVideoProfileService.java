@@ -6,6 +6,7 @@ import com.babyon.childcare.dto.AiQuestionResponse;
 import com.babyon.childcare.entity.AiQuestion;
 import com.babyon.childcare.entity.Sitter;
 import com.babyon.childcare.entity.SitterAiVideoProfile;
+import com.babyon.childcare.exception.*;
 import com.babyon.childcare.repository.AiQuestionRepository;
 import com.babyon.childcare.repository.SitterAiVideoProfileRepository;
 import com.babyon.childcare.repository.SitterRepository;
@@ -15,6 +16,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.util.Arrays;
 import java.util.List;
 import java.util.Random;
 
@@ -47,7 +49,7 @@ public class SitterAiVideoProfileService {
         List<AiQuestion> activeQuestions = aiQuestionRepository.findActiveQuestionsOrderByUsageCount();
 
         if (activeQuestions.isEmpty()) {
-            throw new RuntimeException("No active AI questions available");
+            throw new AiQuestionNotFoundException("No active AI questions available");
         }
 
         // 사용 횟수가 가장 적은 상위 N개 중에서 랜덤 선택
@@ -71,11 +73,11 @@ public class SitterAiVideoProfileService {
     public AiProfileResponse uploadOrUpdateProfile(Long sitterId, AiProfileUploadRequest request) {
         // 1. 시터 존재 여부 확인
         Sitter sitter = sitterRepository.findById(sitterId)
-                .orElseThrow(() -> new RuntimeException("Sitter not found with ID: " + sitterId));
+                .orElseThrow(() -> new SitterNotFoundException(sitterId));
 
         // 2. AI 질문 존재 여부 확인
         AiQuestion aiQuestion = aiQuestionRepository.findByIdAndIsActiveTrue(request.getAiQuestionId())
-                .orElseThrow(() -> new RuntimeException("AI question not found or inactive: " + request.getAiQuestionId()));
+                .orElseThrow(() -> new AiQuestionNotFoundException(request.getAiQuestionId()));
 
         // 3. 파일 검증
         validateVideoFile(request.getIntroVideo(), "Intro Video");
@@ -129,7 +131,7 @@ public class SitterAiVideoProfileService {
      */
     public AiProfileResponse getProfile(Long sitterId) {
         SitterAiVideoProfile profile = aiVideoProfileRepository.findBySitterId(sitterId)
-                .orElseThrow(() -> new RuntimeException("AI video profile not found for sitter: " + sitterId));
+                .orElseThrow(() -> new ProfileNotFoundException(sitterId));
 
         return AiProfileResponse.fromEntity(profile);
     }
@@ -148,17 +150,17 @@ public class SitterAiVideoProfileService {
      */
     private void validateVideoFile(MultipartFile file, String fileName) {
         if (file == null || file.isEmpty()) {
-            throw new RuntimeException(fileName + " is required and cannot be empty");
+            throw new InvalidFileException(fileName + " is required and cannot be empty");
         }
 
         if (file.getSize() > MAX_VIDEO_FILE_SIZE_BYTES) {
-            throw new RuntimeException(fileName + " exceeds maximum file size of 100MB");
+            throw new FileSizeExceededException(fileName, MAX_VIDEO_FILE_SIZE_BYTES);
         }
 
         // 비디오 파일 형식 체크 (간단한 MIME 타입 체크)
         String contentType = file.getContentType();
         if (contentType == null || !contentType.startsWith("video/")) {
-            throw new RuntimeException(fileName + " must be a video file");
+            throw new InvalidFileTypeException(fileName, "video");
         }
     }
 
@@ -172,8 +174,7 @@ public class SitterAiVideoProfileService {
         }
 
         if (durationSeconds > MAX_VIDEO_DURATION_SECONDS) {
-            throw new RuntimeException(fileName + " exceeds maximum duration of " +
-                    MAX_VIDEO_DURATION_SECONDS + " seconds (actual: " + durationSeconds + "s)");
+            throw new VideoDurationExceededException(fileName, MAX_VIDEO_DURATION_SECONDS, durationSeconds);
         }
     }
 
