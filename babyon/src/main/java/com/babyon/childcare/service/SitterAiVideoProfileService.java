@@ -179,20 +179,44 @@ public class SitterAiVideoProfileService {
     }
 
     /**
-     * 영상 길이 추출 (TODO: 실제 구현 필요)
-     * 실제 구현 시 FFmpeg 또는 Xuggler 등을 사용하여 영상 메타데이터 추출
+     * 영상 길이 추출 (임시 구현: 파일 크기 기반 추정)
+     *
+     * TODO: 실제 구현 필요 - FFmpeg 또는 Xuggler 등을 사용하여 영상 메타데이터 추출
+     *
+     * 현재는 파일 크기 기반으로 보수적으로 추정하여 최대 길이 검증만 수행
+     * 추정 기준: 1MB ≈ 10초 (매우 보수적 - 실제는 더 짧을 수 있음)
+     * 이는 고화질 영상 기준이며, 악의적 대용량 파일 업로드를 방지하기 위한 임시 조치
      */
     private Integer extractVideoDuration(MultipartFile videoFile) {
-        // TODO: FFmpeg 또는 Xuggler를 사용하여 실제 영상 길이 추출
-        // 예시:
+        // 파일 크기 기반 최대 추정 길이 계산
+        long fileSizeInMB = videoFile.getSize() / (1024 * 1024);
+        int estimatedMaxSeconds = (int) (fileSizeInMB * 10); // 1MB당 10초로 보수적 추정
+
+        // 추정된 최대 길이가 제한을 초과하는 경우 사전 차단
+        if (estimatedMaxSeconds > MAX_VIDEO_DURATION_SECONDS) {
+            log.warn("Video file size suggests duration exceeds limit. " +
+                    "File size: {}MB, Estimated max duration: {}s, Limit: {}s",
+                    fileSizeInMB, estimatedMaxSeconds, MAX_VIDEO_DURATION_SECONDS);
+
+            throw new VideoDurationExceededException(
+                    videoFile.getOriginalFilename(),
+                    MAX_VIDEO_DURATION_SECONDS,
+                    estimatedMaxSeconds
+            );
+        }
+
+        log.warn("Video duration extraction not fully implemented - using file size based estimation. " +
+                "Actual duration verification will be available after FFmpeg integration.");
+
+        // 실제 FFmpeg 구현 전까지는 null 반환 (추정치는 검증에만 사용)
+        // 향후 구현 예시:
         // FFmpegFrameGrabber grabber = new FFmpegFrameGrabber(videoFile.getInputStream());
         // grabber.start();
         // int duration = (int) (grabber.getLengthInTime() / 1_000_000); // microseconds to seconds
         // grabber.stop();
         // return duration;
 
-        log.warn("Video duration extraction not implemented yet - returning null");
-        return null; // 임시로 null 반환 (검증 스킵)
+        return null;
     }
 
     /**

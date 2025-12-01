@@ -1,6 +1,6 @@
 import 'package:dio/dio.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
-import 'package:flutter/foundation.dart' show kIsWeb;
+import 'package:flutter/foundation.dart' show kIsWeb, kDebugMode;
 import 'dart:io' show Platform;
 import 'dart:math';
 import '../models/job_posting.dart';
@@ -72,22 +72,28 @@ class ApiService {
           if (token != null) {
             options.headers['Authorization'] = 'Bearer $token';
           }
-          print('요청: ${options.method} ${options.path}');
-          print('헤더: ${options.headers}');
-          if (options.data != null) {
-            print('데이터: ${options.data}');
+          if (kDebugMode) {
+            print('요청: ${options.method} ${options.path}');
+            print('헤더: ${options.headers}');
+            if (options.data != null) {
+              print('데이터: ${options.data}');
+            }
           }
           return handler.next(options);
         },
         onResponse: (response, handler) {
-          print('응답: ${response.statusCode}');
-          print('응답 데이터: ${response.data}');
+          if (kDebugMode) {
+            print('응답: ${response.statusCode}');
+            print('응답 데이터: ${response.data}');
+          }
           return handler.next(response);
         },
         onError: (error, handler) {
-          print('오류: ${error.message}');
-          if (error.response != null) {
-            print('오류 응답: ${error.response?.data}');
+          if (kDebugMode) {
+            print('오류: ${error.message}');
+            if (error.response != null) {
+              print('오류 응답: ${error.response?.data}');
+            }
           }
           // 401 에러 처리 (토큰 만료 등)
           if (error.response?.statusCode == 401) {
@@ -126,7 +132,9 @@ class ApiService {
 
       return response.data;
     } catch (e) {
-      print('로그인 오류: $e');
+      if (kDebugMode) {
+        print('로그인 오류: $e');
+      }
       rethrow;
     }
   }
@@ -168,7 +176,9 @@ class ApiService {
 
       return response.data;
     } catch (e) {
-      print('소셜 로그인 처리 오류: $e');
+      if (kDebugMode) {
+        print('소셜 로그인 처리 오류: $e');
+      }
       rethrow;
     }
   }
@@ -215,7 +225,9 @@ class ApiService {
 
       return response.data;
     } catch (e) {
-      print('회원가입 오류: $e');
+      if (kDebugMode) {
+        print('회원가입 오류: $e');
+      }
       rethrow;
     }
   }
@@ -225,7 +237,9 @@ class ApiService {
     try {
       await _dio.post('/auth/logout');
     } catch (e) {
-      print('로그아웃 API 오류: $e');
+      if (kDebugMode) {
+        print('로그아웃 API 오류: $e');
+      }
     } finally {
       await _secureStorage.delete(key: 'auth_token');
     }
@@ -277,7 +291,9 @@ class ApiService {
         'number': response.data['number'],
       };
     } catch (e) {
-      print('게시글 목록 조회 오류: $e');
+      if (kDebugMode) {
+        print('게시글 목록 조회 오류: $e');
+      }
       rethrow;
     }
   }
@@ -288,7 +304,9 @@ class ApiService {
       final response = await _dio.get('/job-postings/$id');
       return JobPosting.fromJson(response.data);
     } catch (e) {
-      print('게시글 상세 조회 오류: $e');
+      if (kDebugMode) {
+        print('게시글 상세 조회 오류: $e');
+      }
       rethrow;
     }
   }
@@ -326,7 +344,9 @@ class ApiService {
       );
       return JobPosting.fromJson(response.data);
     } catch (e) {
-      print('게시글 작성 오류: $e');
+      if (kDebugMode) {
+        print('게시글 작성 오류: $e');
+      }
       rethrow;
     }
   }
@@ -365,7 +385,9 @@ class ApiService {
       );
       return JobPosting.fromJson(response.data);
     } catch (e) {
-      print('게시글 수정 오류: $e');
+      if (kDebugMode) {
+        print('게시글 수정 오류: $e');
+      }
       rethrow;
     }
   }
@@ -375,7 +397,9 @@ class ApiService {
     try {
       await _dio.delete('/job-postings/$id');
     } catch (e) {
-      print('게시글 삭제 오류: $e');
+      if (kDebugMode) {
+        print('게시글 삭제 오류: $e');
+      }
       rethrow;
     }
   }
@@ -400,7 +424,9 @@ class ApiService {
         'number': response.data['number'],
       };
     } catch (e) {
-      print('내 게시글 목록 조회 오류: $e');
+      if (kDebugMode) {
+        print('내 게시글 목록 조회 오류: $e');
+      }
       rethrow;
     }
   }
@@ -424,7 +450,9 @@ class ApiService {
       );
       return JobApplication.fromJson(response.data);
     } catch (e) {
-      print('지원서 제출 오류: $e');
+      if (kDebugMode) {
+        print('지원서 제출 오류: $e');
+      }
       rethrow;
     }
   }
@@ -437,7 +465,9 @@ class ApiService {
           .map((json) => JobApplication.fromJson(json))
           .toList();
     } catch (e) {
-      print('내 지원 내역 조회 오류: $e');
+      if (kDebugMode) {
+        print('내 지원 내역 조회 오류: $e');
+      }
       rethrow;
     }
   }
@@ -451,7 +481,9 @@ class ApiService {
           .map((json) => JobApplication.fromJson(json))
           .toList();
     } catch (e) {
-      print('게시글 지원 내역 조회 오류: $e');
+      if (kDebugMode) {
+        print('게시글 지원 내역 조회 오류: $e');
+      }
       rethrow;
     }
   }
@@ -464,7 +496,9 @@ class ApiService {
           .map((json) => JobApplication.fromJson(json))
           .toList();
     } catch (e) {
-      print('내 게시글 지원 내역 조회 오류: $e');
+      if (kDebugMode) {
+        print('내 게시글 지원 내역 조회 오류: $e');
+      }
       rethrow;
     }
   }
@@ -481,7 +515,9 @@ class ApiService {
       );
       return JobApplication.fromJson(response.data);
     } catch (e) {
-      print('지원 상태 업데이트 오류: $e');
+      if (kDebugMode) {
+        print('지원 상태 업데이트 오류: $e');
+      }
       rethrow;
     }
   }
@@ -491,7 +527,9 @@ class ApiService {
     try {
       await _dio.delete('/job-applications/$applicationId');
     } catch (e) {
-      print('지원 철회 오류: $e');
+      if (kDebugMode) {
+        print('지원 철회 오류: $e');
+      }
       rethrow;
     }
   }
@@ -505,7 +543,9 @@ class ApiService {
       final response = await _dio.get('/sitter-profiles/$sitterId');
       return SitterProfile.fromJson(response.data);
     } catch (e) {
-      print('시터 프로필 조회 오류: $e');
+      if (kDebugMode) {
+        print('시터 프로필 조회 오류: $e');
+      }
       rethrow;
     }
   }
@@ -534,7 +574,9 @@ class ApiService {
       );
       return SitterProfile.fromJson(response.data);
     } catch (e) {
-      print('시터 프로필 수정 오류: $e');
+      if (kDebugMode) {
+        print('시터 프로필 수정 오류: $e');
+      }
       rethrow;
     }
   }
@@ -579,7 +621,9 @@ class ApiService {
         'number': response.data['number'],
       };
     } catch (e) {
-      print('시터 검색 오류: $e');
+      if (kDebugMode) {
+        print('시터 검색 오류: $e');
+      }
       rethrow;
     }
   }
@@ -608,7 +652,9 @@ class ApiService {
       );
       return SitterCertification.fromJson(response.data);
     } catch (e) {
-      print('자격증 추가 오류: $e');
+      if (kDebugMode) {
+        print('자격증 추가 오류: $e');
+      }
       rethrow;
     }
   }
@@ -641,7 +687,9 @@ class ApiService {
       );
       return SitterExperience.fromJson(response.data);
     } catch (e) {
-      print('경력 추가 오류: $e');
+      if (kDebugMode) {
+        print('경력 추가 오류: $e');
+      }
       rethrow;
     }
   }
@@ -666,7 +714,9 @@ class ApiService {
       );
       return SitterAvailableTime.fromJson(response.data);
     } catch (e) {
-      print('가능 시간대 추가 오류: $e');
+      if (kDebugMode) {
+        print('가능 시간대 추가 오류: $e');
+      }
       rethrow;
     }
   }
@@ -693,7 +743,9 @@ class ApiService {
       );
       return SitterServiceArea.fromJson(response.data);
     } catch (e) {
-      print('서비스 지역 추가 오류: $e');
+      if (kDebugMode) {
+        print('서비스 지역 추가 오류: $e');
+      }
       rethrow;
     }
   }

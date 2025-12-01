@@ -2,6 +2,7 @@ package com.babyon.childcare.controller;
 
 import com.babyon.childcare.dto.*;
 import com.babyon.childcare.service.SitterProfileService;
+import com.babyon.childcare.util.AuthenticationHelper;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
@@ -17,6 +18,7 @@ import org.springframework.web.bind.annotation.*;
 public class SitterProfileController {
 
     private final SitterProfileService sitterProfileService;
+    private final AuthenticationHelper authenticationHelper;
 
     @GetMapping("/{sitterId}")
     @Operation(summary = "시터 프로필 조회", description = "특정 시터의 프로필을 조회합니다")
@@ -31,7 +33,9 @@ public class SitterProfileController {
             @PathVariable Long sitterId,
             @RequestBody SitterProfileRequest request,
             Authentication authentication) {
-        // TODO: Verify that the authenticated user is the sitter
+        // 인증된 사용자가 해당 시터인지 검증
+        authenticationHelper.validateResourceAccess(authentication, sitterId);
+
         SitterProfileResponse response = sitterProfileService.updateProfile(sitterId, request);
         return ResponseEntity.ok(response);
     }
@@ -79,6 +83,9 @@ public class SitterProfileController {
             @PathVariable Long sitterId,
             @RequestBody SitterCertificationRequest request,
             Authentication authentication) {
+        // 인증된 사용자가 해당 시터인지 검증
+        authenticationHelper.validateResourceAccess(authentication, sitterId);
+
         SitterCertificationResponse response = sitterProfileService.addCertification(sitterId, request);
         return ResponseEntity.ok(response);
     }
@@ -91,6 +98,9 @@ public class SitterProfileController {
             @PathVariable Long sitterId,
             @RequestBody SitterExperienceRequest request,
             Authentication authentication) {
+        // 인증된 사용자가 해당 시터인지 검증
+        authenticationHelper.validateResourceAccess(authentication, sitterId);
+
         SitterExperienceResponse response = sitterProfileService.addExperience(sitterId, request);
         return ResponseEntity.ok(response);
     }
@@ -103,6 +113,9 @@ public class SitterProfileController {
             @PathVariable Long sitterId,
             @RequestBody SitterAvailableTimeRequest request,
             Authentication authentication) {
+        // 인증된 사용자가 해당 시터인지 검증
+        authenticationHelper.validateResourceAccess(authentication, sitterId);
+
         SitterAvailableTimeResponse response = sitterProfileService.addAvailableTime(sitterId, request);
         return ResponseEntity.ok(response);
     }
@@ -115,6 +128,9 @@ public class SitterProfileController {
             @PathVariable Long sitterId,
             @RequestBody SitterServiceAreaRequest request,
             Authentication authentication) {
+        // 인증된 사용자가 해당 시터인지 검증
+        authenticationHelper.validateResourceAccess(authentication, sitterId);
+
         SitterServiceAreaResponse response = sitterProfileService.addServiceArea(sitterId, request);
         return ResponseEntity.ok(response);
     }
