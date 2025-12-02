@@ -67,8 +67,10 @@ public class SecurityConfig {
                 .cors(Customizer.withDefaults()) // CORS 설정 추가
                 .csrf(csrf -> csrf.disable())
                 .authorizeHttpRequests(authConfig -> authConfig
-                        .requestMatchers("/api/auth/**", "/login", "/error", "/oauth2/**").permitAll()
+                        .requestMatchers("/api/auth/**", "/api/v1/auth/**", "/login", "/error", "/oauth2/**").permitAll()
                         .requestMatchers("/api/public/**").permitAll() // 공개 API 경로 추가
+                        .requestMatchers("/api/v1/sitter/ai-question/random").permitAll() // AI 질문 조회 (공개)
+                        .requestMatchers("/api/v1/sitter/ai-profile/*").permitAll() // AI 프로필 조회 (공개)
                         .requestMatchers("/register/oauth2", "/login/oauth2/success").permitAll() // 소셜 회원가입 관련 경로 추가
                         .requestMatchers("/css/**", "/js/**", "/images/**").permitAll()
                         .requestMatchers("/swagger-ui/**", "/swagger-ui.html", "/v3/api-docs/**").permitAll()

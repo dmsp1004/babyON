@@ -33,9 +33,7 @@ public class SitterAiVideoProfileService {
     private final SitterAiVideoProfileRepository aiVideoProfileRepository;
     private final AiQuestionRepository aiQuestionRepository;
     private final SitterRepository sitterRepository;
-
-    // TODO: S3 Service 의존성 추가 필요
-    // private final S3Service s3Service;
+    private final S3Service s3Service;
 
     private static final int MAX_VIDEO_DURATION_SECONDS = 120; // 최대 영상 길이: 120초
     private static final long MAX_VIDEO_FILE_SIZE_BYTES = 100 * 1024 * 1024; // 최대 파일 크기: 100MB
@@ -133,7 +131,17 @@ public class SitterAiVideoProfileService {
         SitterAiVideoProfile profile = aiVideoProfileRepository.findBySitterId(sitterId)
                 .orElseThrow(() -> new ProfileNotFoundException(sitterId));
 
-        return AiProfileResponse.fromEntity(profile);
+        AiProfileResponse response = AiProfileResponse.fromEntity(profile);
+        
+        // S3 키를 Presigned URL로 변환 (1시간 유효)
+        if (response.getIntroVideoUrl() != null) {
+            response.setIntroVideoUrl(s3Service.generatePresignedUrl(response.getIntroVideoUrl()));
+        }
+        if (response.getAnswerVideoUrl() != null) {
+            response.setAnswerVideoUrl(s3Service.generatePresignedUrl(response.getAnswerVideoUrl()));
+        }
+        
+        return response;
     }
 
     /**
@@ -224,16 +232,12 @@ public class SitterAiVideoProfileService {
      * 실제 구현 시 AWS S3 SDK를 사용하여 파일 업로드
      */
     private String uploadVideoToS3(MultipartFile videoFile, Long sitterId, String videoType) {
-        // TODO: 실제 S3Service를 통한 파일 업로드 구현
-        // 예시:
-        // String fileName = String.format("sitter/%d/ai-profile/%s-%d.mp4",
-        //         sitterId, videoType, System.currentTimeMillis());
-        // return s3Service.uploadFile(videoFile, fileName);
-
-        String mockUrl = String.format("https://s3.amazonaws.com/babyon/sitter/%d/ai-profile/%s-%d.mp4",
-                sitterId, videoType, System.currentTimeMillis());
-
-        log.warn("S3 upload not implemented yet - returning mock URL: {}", mockUrl);
-        return mockUrl; // 임시로 Mock URL 반환
+        String folder = String.format("sitter/%d/ai-profile", sitterId);
+        String s3Key = s3Service.uploadFile(videoFile, folder);
+        
+        log.info("Video uploaded to S3: sitterId={}, videoType={}, s3Key={}", 
+                sitterId, videoType, s3Key);
+        
+        return s3Key;
     }
 }
