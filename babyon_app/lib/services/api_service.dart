@@ -120,7 +120,7 @@ class ApiService {
   Future<Map<String, dynamic>> login(String email, String password) async {
     try {
       final response = await _dio.post(
-        '/auth/login',
+        '/v1/auth/login',
         data: {'email': email, 'password': password},
       );
 
@@ -164,7 +164,7 @@ class ApiService {
   ) async {
     try {
       final response = await _dio.post(
-        '/auth/oauth2/callback/$provider',
+        '/v1/auth/oauth2/callback/$provider',
         data: {'code': code, 'redirect_uri': _redirectUri},
       );
 
@@ -190,7 +190,7 @@ class ApiService {
     _isValidating = true;
 
     try {
-      final response = await _dio.get('/auth/validate-token');
+      final response = await _dio.get('/v1/auth/validate-token');
       return response.statusCode == 200;
     } catch (e) {
       return false;
@@ -208,7 +208,7 @@ class ApiService {
   ) async {
     try {
       final response = await _dio.post(
-        '/auth/register',
+        '/v1/auth/register',
         data: {
           'email': email,
           'password': password,
@@ -235,7 +235,7 @@ class ApiService {
   // 로그아웃 메서드
   Future<void> logout() async {
     try {
-      await _dio.post('/auth/logout');
+      await _dio.post('/v1/auth/logout');
     } catch (e) {
       if (kDebugMode) {
         print('로그아웃 API 오류: $e');
