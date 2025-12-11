@@ -100,8 +100,14 @@ public class SecurityConfig {
         List<String> allowedOrigins = Arrays.asList(allowedOriginsString.split(","));
         configuration.setAllowedOrigins(allowedOrigins);
 
+        // 개발 환경: 모든 localhost 포트 허용 (보안상 프로덕션에서는 제거 필요)
+        configuration.setAllowedOriginPatterns(Arrays.asList(
+            "http://localhost:*",
+            "http://127.0.0.1:*"
+        ));
+
         configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"));
-        configuration.setAllowedHeaders(Arrays.asList("Authorization", "Content-Type", "Accept"));
+        configuration.setAllowedHeaders(Arrays.asList("*")); // 모든 헤더 허용
         configuration.setAllowCredentials(true); // 인증 정보 허용
         configuration.setMaxAge(3600L);
         configuration.setExposedHeaders(Arrays.asList("Authorization", "Content-Type"));

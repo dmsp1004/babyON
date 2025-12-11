@@ -59,6 +59,11 @@ dependencies:
   url_launcher: ^6.1.10 # URL을 열기 위한 패키지, 외부 브라우저나 앱 실행에 사용
   uni_links: ^0.5.1
 
+  # 카메라 및 비디오 관련
+  camera: ^0.10.5+5 # 카메라 접근 및 녹화 기능 제공
+  video_player: ^2.8.1 # 비디오 재생 기능 제공
+  path_provider: ^2.1.1 # 파일 저장 경로 접근
+
 dev_dependencies:
   flutter_test:
     sdk: flutter

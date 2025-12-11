@@ -69,6 +69,13 @@ class _ParentHomeScreenState extends State<ParentHomeScreen> {
         title: const Text('babyON'),
         actions: [
           IconButton(
+            icon: const Icon(Icons.person),
+            tooltip: '내 프로필',
+            onPressed: () {
+              Navigator.pushNamed(context, '/parent_profile');
+            },
+          ),
+          IconButton(
             icon: const Icon(Icons.logout),
             onPressed: () async {
               await authProvider.logout();

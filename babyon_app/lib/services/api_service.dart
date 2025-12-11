@@ -748,4 +748,166 @@ class ApiService {
       rethrow;
     }
   }
+
+  // ==================== 부모 프로필 관련 API ====================
+
+  /// 내 부모 프로필 조회
+  Future<Map<String, dynamic>> getMyParentProfile() async {
+    try {
+      final response = await _dio.get('/v1/parent/profile/me');
+      return response.data;
+    } catch (e) {
+      if (kDebugMode) {
+        print('부모 프로필 조회 오류: $e');
+      }
+      rethrow;
+    }
+  }
+
+  /// 특정 부모 프로필 조회
+  Future<Map<String, dynamic>> getParentProfile(int parentId) async {
+    try {
+      final response = await _dio.get('/v1/parent/profile/$parentId');
+      return response.data;
+    } catch (e) {
+      if (kDebugMode) {
+        print('부모 프로필 조회 오류: $e');
+      }
+      rethrow;
+    }
+  }
+
+  /// 내 부모 프로필 수정
+  Future<Map<String, dynamic>> updateMyParentProfile({
+    int? numberOfChildren,
+    String? address,
+    String? additionalInfo,
+    String? phoneNumber,
+  }) async {
+    try {
+      final response = await _dio.patch(
+        '/v1/parent/profile',
+        data: {
+          if (numberOfChildren != null) 'numberOfChildren': numberOfChildren,
+          if (address != null) 'address': address,
+          if (additionalInfo != null) 'additionalInfo': additionalInfo,
+          if (phoneNumber != null) 'phoneNumber': phoneNumber,
+        },
+      );
+      return response.data;
+    } catch (e) {
+      if (kDebugMode) {
+        print('부모 프로필 수정 오류: $e');
+      }
+      rethrow;
+    }
+  }
+
+  /// 부모 프로필 존재 여부 확인
+  Future<bool> parentProfileExists() async {
+    try {
+      final response = await _dio.get('/v1/parent/profile/me/exists');
+      return response.data as bool;
+    } catch (e) {
+      if (kDebugMode) {
+        print('부모 프로필 존재 여부 확인 오류: $e');
+      }
+      rethrow;
+    }
+  }
+
+  // ==================== AI 화상 이력서 관련 API ====================
+
+  /// 랜덤 AI 질문 조회
+  Future<Map<String, dynamic>> getRandomAiQuestion() async {
+    try {
+      final response = await _dio.get('/v1/sitter/ai-question/random');
+      return response.data;
+    } catch (e) {
+      if (kDebugMode) {
+        print('랜덤 AI 질문 조회 오류: $e');
+      }
+      rethrow;
+    }
+  }
+
+  /// AI 화상 이력서 업로드/수정
+  Future<Map<String, dynamic>> uploadAiVideoProfile({
+    required String introVideoPath,
+    required String answerVideoPath,
+    required int aiQuestionId,
+    String status = 'ACTIVE',
+  }) async {
+    try {
+      final formData = FormData.fromMap({
+        'introVideo': await MultipartFile.fromFile(
+          introVideoPath,
+          filename: 'intro_${DateTime.now().millisecondsSinceEpoch}.mp4',
+        ),
+        'answerVideo': await MultipartFile.fromFile(
+          answerVideoPath,
+          filename: 'answer_${DateTime.now().millisecondsSinceEpoch}.mp4',
+        ),
+        'aiQuestionId': aiQuestionId,
+        'status': status,
+      });
+
+      final response = await _dio.put(
+        '/v1/sitter/ai-profile',
+        data: formData,
+        options: Options(
+          headers: {
+            'Content-Type': 'multipart/form-data',
+          },
+          receiveTimeout: const Duration(minutes: 5), // 영상 업로드 시간 고려
+          sendTimeout: const Duration(minutes: 5),
+        ),
+      );
+      return response.data;
+    } catch (e) {
+      if (kDebugMode) {
+        print('AI 화상 이력서 업로드 오류: $e');
+      }
+      rethrow;
+    }
+  }
+
+  /// 내 AI 화상 이력서 조회
+  Future<Map<String, dynamic>> getMyAiVideoProfile() async {
+    try {
+      final response = await _dio.get('/v1/sitter/ai-profile/me');
+      return response.data;
+    } catch (e) {
+      if (kDebugMode) {
+        print('내 AI 화상 이력서 조회 오류: $e');
+      }
+      rethrow;
+    }
+  }
+
+  /// 특정 시터의 AI 화상 이력서 조회
+  Future<Map<String, dynamic>> getSitterAiVideoProfile(int sitterId) async {
+    try {
+      final response = await _dio.get('/v1/sitter/ai-profile/$sitterId');
+      return response.data;
+    } catch (e) {
+      if (kDebugMode) {
+        print('시터 AI 화상 이력서 조회 오류: $e');
+      }
+      rethrow;
+    }
+  }
+
+  /// AI 화상 이력서 존재 여부 확인
+  Future<bool> aiVideoProfileExists() async {
+    try {
+      final response = await _dio.get('/v1/sitter/ai-profile/me/exists');
+      return response.data as bool;
+    } catch (e) {
+      if (kDebugMode) {
+        print('AI 화상 이력서 존재 여부 확인 오류: $e');
+      }
+      rethrow;
+    }
+  }
 }

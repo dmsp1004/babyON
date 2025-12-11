@@ -71,6 +71,20 @@ class _SitterHomeScreenState extends State<SitterHomeScreen> {
         title: const Text('babyON'),
         actions: [
           IconButton(
+            icon: const Icon(Icons.video_camera_front),
+            tooltip: 'AI 화상 이력서',
+            onPressed: () {
+              Navigator.pushNamed(context, '/ai_video_resume');
+            },
+          ),
+          IconButton(
+            icon: const Icon(Icons.person),
+            tooltip: '프로필 수정',
+            onPressed: () {
+              Navigator.pushNamed(context, '/sitter_profile_edit');
+            },
+          ),
+          IconButton(
             icon: const Icon(Icons.logout),
             onPressed: () async {
               await authProvider.logout();

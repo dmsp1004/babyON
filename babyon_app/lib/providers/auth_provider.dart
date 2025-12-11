@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
-import 'package:shared_preferences/shared_preferences.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import '../services/api_service.dart';
 import 'package:url_launcher/url_launcher.dart';
 
@@ -15,6 +15,9 @@ class AuthProvider with ChangeNotifier {
 
   // API 서비스 인스턴스
   final ApiService _apiService = ApiService();
+
+  // FlutterSecureStorage 인스턴스 (ApiService와 동일한 저장소 사용)
+  final FlutterSecureStorage _secureStorage = const FlutterSecureStorage();
 
   // Getter 메서드
   String? get token => _token;
@@ -64,12 +67,11 @@ class AuthProvider with ChangeNotifier {
         throw Exception('로그인 응답 데이터가 올바르지 않습니다.');
       }
 
-      // 로컬 저장소에 정보 저장
-      final prefs = await SharedPreferences.getInstance();
-      prefs.setString('token', _token!);
-      prefs.setInt('userId', _userId!);
-      prefs.setString('email', _email!);
-      prefs.setString('userType', _userType!); // 사용자 유형 저장
+      // 로컬 저장소에 정보 저장 (SecureStorage 사용)
+      await _secureStorage.write(key: 'auth_token', value: _token!);
+      await _secureStorage.write(key: 'userId', value: _userId.toString());
+      await _secureStorage.write(key: 'email', value: _email!);
+      await _secureStorage.write(key: 'userType', value: _userType!); // 사용자 유형 저장
 
       print('로그인 성공: 유형=$_userType, 이메일=$_email, userId=$_userId');
       _isLoading = false; // 로딩 종료
@@ -161,12 +163,11 @@ class AuthProvider with ChangeNotifier {
         throw Exception('소셜 로그인 응답 데이터가 올바르지 않습니다.');
       }
 
-      // 로컬 저장소에 정보 저장
-      final prefs = await SharedPreferences.getInstance();
-      prefs.setString('token', _token!);
-      prefs.setInt('userId', _userId!);
-      prefs.setString('email', _email!);
-      prefs.setString('userType', _userType!);
+      // 로컬 저장소에 정보 저장 (SecureStorage 사용)
+      await _secureStorage.write(key: 'auth_token', value: _token!);
+      await _secureStorage.write(key: 'userId', value: _userId.toString());
+      await _secureStorage.write(key: 'email', value: _email!);
+      await _secureStorage.write(key: 'userType', value: _userType!);
 
       print('소셜 로그인 성공: 유형=$_userType, 이메일=$_email, userId=$_userId');
       _isLoading = false;
@@ -192,19 +193,18 @@ class AuthProvider with ChangeNotifier {
     _isAuthenticating = true;
 
     try {
-      final prefs = await SharedPreferences.getInstance();
-
       // 저장된 토큰이 없으면 자동 로그인 불가
-      if (!prefs.containsKey('token')) {
+      _token = await _secureStorage.read(key: 'auth_token');
+      if (_token == null) {
         _isAuthenticating = false;
         return false;
       }
 
       // 저장된 정보 불러오기
-      _token = prefs.getString('token');
-      _userId = prefs.getInt('userId');
-      _email = prefs.getString('email');
-      _userType = prefs.getString('userType');
+      final userIdStr = await _secureStorage.read(key: 'userId');
+      _userId = userIdStr != null ? int.tryParse(userIdStr) : null;
+      _email = await _secureStorage.read(key: 'email');
+      _userType = await _secureStorage.read(key: 'userType');
 
       // 토큰 유효성 검증 (선택 사항)
       try {
@@ -246,9 +246,8 @@ class AuthProvider with ChangeNotifier {
       _email = null;
       _userType = null;
 
-      // 저장된 정보 삭제
-      final prefs = await SharedPreferences.getInstance();
-      prefs.clear();
+      // 저장된 정보 삭제 (SecureStorage 사용)
+      await _secureStorage.deleteAll();
 
       _isAuthenticating = false;
       notifyListeners();
@@ -301,12 +300,11 @@ class AuthProvider with ChangeNotifier {
         throw Exception('회원가입 응답 데이터가 올바르지 않습니다.');
       }
 
-      // 로컬 저장소에 정보 저장
-      final prefs = await SharedPreferences.getInstance();
-      prefs.setString('token', _token!);
-      prefs.setInt('userId', _userId!);
-      prefs.setString('email', _email!);
-      prefs.setString('userType', _userType!); // 사용자 유형 저장
+      // 로컬 저장소에 정보 저장 (SecureStorage 사용)
+      await _secureStorage.write(key: 'auth_token', value: _token!);
+      await _secureStorage.write(key: 'userId', value: _userId.toString());
+      await _secureStorage.write(key: 'email', value: _email!);
+      await _secureStorage.write(key: 'userType', value: _userType!); // 사용자 유형 저장
 
       print('회원가입 성공: 유형=$_userType, 이메일=$_email, userId=$_userId');
       _isLoading = false; // 로딩 종료
