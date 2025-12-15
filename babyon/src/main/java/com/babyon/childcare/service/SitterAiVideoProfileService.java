@@ -81,14 +81,14 @@ public class SitterAiVideoProfileService {
         validateVideoFile(request.getIntroVideo(), "Intro Video");
         validateVideoFile(request.getAnswerVideo(), "Answer Video");
 
-        // 4. 영상 길이 검증 (TODO: 실제 구현 시 FFmpeg 등을 사용하여 영상 메타데이터 추출)
+        // 4. 영상 길이 검증 (현재: 파일 크기 기반 추정, FUTURE: FFmpeg 통합)
         Integer introDuration = extractVideoDuration(request.getIntroVideo());
         Integer answerDuration = extractVideoDuration(request.getAnswerVideo());
 
         validateVideoDuration(introDuration, "Intro Video");
         validateVideoDuration(answerDuration, "Answer Video");
 
-        // 5. S3에 영상 파일 업로드 (TODO: 실제 S3Service 구현 필요)
+        // 5. S3에 영상 파일 업로드
         String introVideoUrl = uploadVideoToS3(request.getIntroVideo(), sitterId, "intro");
         String answerVideoUrl = uploadVideoToS3(request.getAnswerVideo(), sitterId, "answer");
 
@@ -189,7 +189,7 @@ public class SitterAiVideoProfileService {
     /**
      * 영상 길이 추출 (임시 구현: 파일 크기 기반 추정)
      *
-     * TODO: 실제 구현 필요 - FFmpeg 또는 Xuggler 등을 사용하여 영상 메타데이터 추출
+     * FUTURE ENHANCEMENT: FFmpeg 또는 Xuggler를 사용한 정확한 영상 메타데이터 추출
      *
      * 현재는 파일 크기 기반으로 보수적으로 추정하여 최대 길이 검증만 수행
      * 추정 기준: 1MB ≈ 10초 (매우 보수적 - 실제는 더 짧을 수 있음)
@@ -228,8 +228,8 @@ public class SitterAiVideoProfileService {
     }
 
     /**
-     * S3에 영상 업로드 (TODO: 실제 구현 필요)
-     * 실제 구현 시 AWS S3 SDK를 사용하여 파일 업로드
+     * S3에 영상 업로드
+     * AWS S3 SDK를 사용한 파일 업로드
      */
     private String uploadVideoToS3(MultipartFile videoFile, Long sitterId, String videoType) {
         String folder = String.format("sitter/%d/ai-profile", sitterId);

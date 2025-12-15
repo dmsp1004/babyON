@@ -71,8 +71,7 @@ public class SitterAiProfileController {
      * - Authentication에서 시터 ID를 추출하여 본인의 프로필만 수정 가능
      * - SITTER 역할만 접근 가능
      *
-     * TODO: 실제 S3 업로드 구현 필요 (현재는 Mock URL 반환)
-     * TODO: FFmpeg를 사용한 실제 영상 길이 검증 구현 필요
+     * FUTURE ENHANCEMENT: FFmpeg 통합을 통한 정확한 영상 길이 및 메타데이터 검증
      *
      * @param introVideo 자유 소개 영상 파일
      * @param answerVideo AI 질문 답변 영상 파일
