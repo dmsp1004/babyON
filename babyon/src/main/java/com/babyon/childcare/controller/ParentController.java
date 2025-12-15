@@ -3,6 +3,7 @@ package com.babyon.childcare.controller;
 import com.babyon.childcare.dto.ParentProfileResponse;
 import com.babyon.childcare.dto.ParentProfileUpdateRequest;
 import com.babyon.childcare.service.ParentService;
+import com.babyon.childcare.util.AuthenticationHelper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
@@ -10,7 +11,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
-import javax.validation.Valid;
+import jakarta.validation.Valid;
 
 /**
  * 부모 프로필 관리 컨트롤러
@@ -22,6 +23,7 @@ import javax.validation.Valid;
 public class ParentController {
 
     private final ParentService parentService;
+    private final AuthenticationHelper authenticationHelper;
 
     /**
      * 내 부모 프로필 조회
@@ -31,7 +33,7 @@ public class ParentController {
     @GetMapping("/profile/me")
     @PreAuthorize("hasRole('PARENT')")
     public ResponseEntity<ParentProfileResponse> getMyProfile(Authentication authentication) {
-        Long parentId = Long.parseLong(authentication.getName());
+        Long parentId = authenticationHelper.getUserId(authentication);
         log.info("부모 프로필 조회 요청: parentId={}", parentId);
 
         ParentProfileResponse response = parentService.getProfile(parentId);
@@ -63,7 +65,7 @@ public class ParentController {
     public ResponseEntity<ParentProfileResponse> updateMyProfile(
             Authentication authentication,
             @Valid @RequestBody ParentProfileUpdateRequest request) {
-        Long parentId = Long.parseLong(authentication.getName());
+        Long parentId = authenticationHelper.getUserId(authentication);
         log.info("부모 프로필 수정 요청: parentId={}, request={}", parentId, request);
 
         ParentProfileResponse response = parentService.updateProfile(parentId, request);
@@ -78,7 +80,7 @@ public class ParentController {
     @GetMapping("/profile/me/exists")
     @PreAuthorize("hasRole('PARENT')")
     public ResponseEntity<Boolean> profileExists(Authentication authentication) {
-        Long parentId = Long.parseLong(authentication.getName());
+        Long parentId = authenticationHelper.getUserId(authentication);
         log.info("부모 프로필 존재 여부 확인 요청: parentId={}", parentId);
 
         boolean exists = parentService.exists(parentId);
