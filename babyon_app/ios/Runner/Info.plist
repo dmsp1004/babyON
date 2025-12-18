@@ -45,5 +45,12 @@
 	<true/>
 	<key>UIApplicationSupportsIndirectInputEvents</key>
 	<true/>
+	<!-- 카메라 및 마이크 권한 설명 -->
+	<key>NSCameraUsageDescription</key>
+	<string>AI 화상 이력서 촬영을 위해 카메라 접근 권한이 필요합니다.</string>
+	<key>NSMicrophoneUsageDescription</key>
+	<string>AI 화상 이력서 녹음을 위해 마이크 접근 권한이 필요합니다.</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>촬영한 동영상을 저장하기 위해 사진 라이브러리 접근 권한이 필요합니다.</string>
 </dict>
 </plist>
