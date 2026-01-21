@@ -51,7 +51,10 @@
       "Bash(done)",
       "Bash(cmd.exe /c \"taskkill /F /PID 24380\")",
       "Bash(flutter run:*)",
-      "Bash(\"/c/Program Files/MySQL/MySQL Shell 8.0/bin/mysqlsh\":*)"
+      "Bash(\"/c/Program Files/MySQL/MySQL Shell 8.0/bin/mysqlsh\":*)",
+      "Bash(JAVA_HOME=\"/c/Program Files/Java/jdk-17\" ./gradlew build:*)",
+      "Bash(JAVA_HOME=\"/c/Program Files/Java/jdk-17\" ./gradlew test:*)",
+      "Bash(flutter build:*)"
     ],
     "deny": [],
     "ask": []
