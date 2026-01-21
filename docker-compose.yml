@@ -28,7 +28,7 @@ services:
       SPRING_DATASOURCE_URL: jdbc:mysql://db:3306/babyon_db?useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true
       SPRING_DATASOURCE_USERNAME: root
       SPRING_DATASOURCE_PASSWORD: tjdrhdgkwk1004^^
-      SPRING_PROFILES_ACTIVE: secrets
+      JWT_SECRET: your-secure-jwt-secret-key-for-babyon-platform-256-bits
     ports:
       - "8081:8085"
     depends_on:

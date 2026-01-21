@@ -12,10 +12,13 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.security.web.authentication.SimpleUrlAuthenticationSuccessHandler;
 import org.springframework.stereotype.Component;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
+import org.springframework.security.oauth2.client.registration.ClientRegistrationRepository;
 import java.io.IOException;
 import java.util.Map;
 
 @Component
+@ConditionalOnBean(ClientRegistrationRepository.class)
 public class OAuth2LoginSuccessHandler extends SimpleUrlAuthenticationSuccessHandler {
 
     private final JwtUtil jwtUtil;

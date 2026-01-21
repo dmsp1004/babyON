@@ -13,11 +13,14 @@ import org.springframework.web.util.UriComponentsBuilder;
 
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
+import org.springframework.security.oauth2.client.registration.ClientRegistrationRepository;
 import java.io.IOException;
 import java.util.Map;
 import java.util.Optional;
 
 @Component
+@ConditionalOnBean(ClientRegistrationRepository.class)
 public class OAuth2SuccessHandler implements AuthenticationSuccessHandler {
 
     private final UserRepository userRepository;

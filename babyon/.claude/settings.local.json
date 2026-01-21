@@ -54,7 +54,13 @@
       "Bash(\"/c/Program Files/MySQL/MySQL Shell 8.0/bin/mysqlsh\":*)",
       "Bash(JAVA_HOME=\"/c/Program Files/Java/jdk-17\" ./gradlew build:*)",
       "Bash(JAVA_HOME=\"/c/Program Files/Java/jdk-17\" ./gradlew test:*)",
-      "Bash(flutter build:*)"
+      "Bash(flutter build:*)",
+      "Bash(docker:*)",
+      "Bash(docker-compose up:*)",
+      "Bash(docker-compose logs:*)",
+      "Bash(docker-compose down:*)",
+      "Bash(docker-compose build:*)",
+      "Bash(docker-compose ps:*)"
     ],
     "deny": [],
     "ask": []

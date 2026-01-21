@@ -33,19 +33,22 @@ public class SecurityConfig {
     private final JwtUtil jwtUtil;
     private final CustomAuthenticationProvider authenticationProvider;
     private UserDetailsService userDetailsService;
-    private final CustomOAuth2UserService customOAuth2UserService;
-    private final OAuth2SuccessHandler oAuth2SuccessHandler;
+    private CustomOAuth2UserService customOAuth2UserService;
+    private OAuth2SuccessHandler oAuth2SuccessHandler;
 
     @Value("${app.cors.allowed-origins}")
     private String allowedOriginsString;
 
     @Autowired
     public SecurityConfig(JwtUtil jwtUtil,
-                          CustomAuthenticationProvider authenticationProvider,
-                          CustomOAuth2UserService customOAuth2UserService,
-                          OAuth2SuccessHandler oAuth2SuccessHandler) {
+                          CustomAuthenticationProvider authenticationProvider) {
         this.jwtUtil = jwtUtil;
         this.authenticationProvider = authenticationProvider;
+    }
+
+    @Autowired(required = false)
+    public void setOAuth2Services(CustomOAuth2UserService customOAuth2UserService,
+                                   OAuth2SuccessHandler oAuth2SuccessHandler) {
         this.customOAuth2UserService = customOAuth2UserService;
         this.oAuth2SuccessHandler = oAuth2SuccessHandler;
     }
@@ -83,13 +86,17 @@ public class SecurityConfig {
                 .sessionManagement(session -> session
                         .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
                 )
-                .oauth2Login(oauth2 -> oauth2
-                        .userInfoEndpoint(userInfo -> userInfo
-                                .userService(customOAuth2UserService)
-                        )
-                        .successHandler(oAuth2SuccessHandler) // 소셜 로그인 성공 핸들러 적용
-                )
                 .addFilterBefore(jwtAuthenticationFilter(), UsernamePasswordAuthenticationFilter.class);
+
+        // OAuth2 로그인은 서비스가 설정된 경우에만 활성화
+        if (customOAuth2UserService != null && oAuth2SuccessHandler != null) {
+            http.oauth2Login(oauth2 -> oauth2
+                    .userInfoEndpoint(userInfo -> userInfo
+                            .userService(customOAuth2UserService)
+                    )
+                    .successHandler(oAuth2SuccessHandler)
+            );
+        }
 
         return http.build();
     }
