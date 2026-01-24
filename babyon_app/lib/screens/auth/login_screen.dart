@@ -2,10 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:babyon_app/screens/job_posting_list_screen.dart';
 import 'package:provider/provider.dart';
 import '../../providers/auth_provider.dart';
-import 'package:uni_links/uni_links.dart';
+import 'package:app_links/app_links.dart';
 import 'dart:async';
 import 'package:flutter/foundation.dart' show kIsWeb;
-import 'dart:html' if (dart.library.io) 'dart:ui' show window;
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({Key? key}) : super(key: key);
@@ -24,10 +23,12 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
   late AnimationController _animationController;
   late Animation<double> _fadeAnimation;
   late Animation<Offset> _slideAnimation;
+  late AppLinks _appLinks;
 
   @override
   void initState() {
     super.initState();
+    _appLinks = AppLinks();
     _initDeepLinkListener();
     _initAnimations();
   }
@@ -71,9 +72,10 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
     }
 
     try {
-      _linkSubscription = uriLinkStream.listen(
-        (Uri? uri) {
-          if (uri != null && mounted) {
+      // app_links 패키지 사용
+      _linkSubscription = _appLinks.uriLinkStream.listen(
+        (Uri uri) {
+          if (mounted) {
             print('모바일 딥링크 수신: $uri');
             _handleIncomingLink(uri);
           }
@@ -83,7 +85,7 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
         },
       );
 
-      final initialUri = await getInitialUri();
+      final initialUri = await _appLinks.getInitialLink();
       if (initialUri != null && mounted) {
         print('초기 딥링크 수신: $initialUri');
         _handleIncomingLink(initialUri);

@@ -12,7 +12,7 @@
     <uses-feature android:name="android.hardware.camera.autofocus" android:required="false" />
 
     <application
-        android:label="ida_app"
+        android:label="babyON"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher">
         <activity

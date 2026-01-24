@@ -22,14 +22,23 @@ class ApiService {
           : 'com.ida.childcare:/oauth/callback';
 
   // 플랫폼별 기본 URL 설정
+  // ============================================================
+  // 서버 포트 설정 가이드:
+  // - Docker 환경 (docker-compose up): 8081
+  // - 로컬 실행 (gradlew bootRun): 8085
+  // - 실제 디바이스 테스트 시: PC의 IP 주소로 변경 필요
+  //   예: http://192.168.0.100:8085/api
+  // ============================================================
+  static const int _serverPort = 8085;  // 로컬 개발 환경 기본값
+
   String get _baseUrl {
     if (kIsWeb) {
-      return 'http://localhost:8085/api';
+      return 'http://localhost:$_serverPort/api';
     } else {
       if (Platform.isAndroid) {
-        return 'http://10.0.2.2:8085/api';
+        return 'http://10.0.2.2:$_serverPort/api';
       } else {
-        return 'http://localhost:8085/api';
+        return 'http://localhost:$_serverPort/api';
       }
     }
   }
@@ -37,12 +46,12 @@ class ApiService {
   // OAuth2 서버 URL
   String get _oauth2BaseUrl {
     if (kIsWeb) {
-      return 'http://localhost:8085';
+      return 'http://localhost:$_serverPort';
     } else {
       if (Platform.isAndroid) {
-        return 'http://10.0.2.2:8085';
+        return 'http://10.0.2.2:$_serverPort';
       } else {
-        return 'http://localhost:8085';
+        return 'http://localhost:$_serverPort';
       }
     }
   }
