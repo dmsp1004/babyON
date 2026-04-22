@@ -69,6 +69,16 @@ public class JobPostingService {
             throw new IllegalArgumentException("잘못된 구인 유형입니다: " + request.getJobType());
         }
 
+        // 급여 타입 설정 (미입력 시 HOURLY 기본값)
+        if (request.getPayType() != null && !request.getPayType().isBlank()) {
+            try {
+                jobPosting.setPayType(JobPosting.PayType.valueOf(request.getPayType()));
+            } catch (IllegalArgumentException e) {
+                throw new IllegalArgumentException("잘못된 급여 타입입니다: " + request.getPayType()
+                        + " (허용 값: HOURLY, DAILY, MONTHLY)");
+            }
+        }
+
         // 저장
         JobPosting savedJobPosting = jobPostingRepository.save(jobPosting);
 
@@ -116,6 +126,16 @@ public class JobPostingService {
             jobPosting.setJobType(jobType);
         } catch (IllegalArgumentException e) {
             throw new IllegalArgumentException("잘못된 구인 유형입니다: " + request.getJobType());
+        }
+
+        // 급여 타입 설정 (미입력 시 기존 값 유지)
+        if (request.getPayType() != null && !request.getPayType().isBlank()) {
+            try {
+                jobPosting.setPayType(JobPosting.PayType.valueOf(request.getPayType()));
+            } catch (IllegalArgumentException e) {
+                throw new IllegalArgumentException("잘못된 급여 타입입니다: " + request.getPayType()
+                        + " (허용 값: HOURLY, DAILY, MONTHLY)");
+            }
         }
 
         // 저장
@@ -320,8 +340,9 @@ public class JobPostingService {
                 .startDate(jobPosting.getStartDate())
                 .endDate(jobPosting.getEndDate())
                 .hourlyRate(jobPosting.getHourlyRate())
+                .payType(jobPosting.getPayType() != null ? jobPosting.getPayType().name() : JobPosting.PayType.HOURLY.name())
                 .requiredExperienceYears(jobPosting.getRequiredExperienceYears())
-                .jobType(jobPosting.getJobType().name())
+                .jobType(jobPosting.getJobType() != null ? jobPosting.getJobType().name() : null)
                 .ageOfChildren(jobPosting.getAgeOfChildren())
                 .numberOfChildren(jobPosting.getNumberOfChildren())
                 .isActive(jobPosting.getIsActive())

@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart' show kDebugMode;
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../services/api_service.dart';
@@ -21,6 +22,7 @@ class _JobPostingDetailScreenState extends State<JobPostingDetailScreen> {
   JobPosting? _jobPosting;
   bool _isLoading = true;
   bool _isDeleting = false;
+  bool _hasApplied = false;
   String? _errorMessage;
 
   final ApiService _apiService = ApiService();
@@ -38,17 +40,23 @@ class _JobPostingDetailScreenState extends State<JobPostingDetailScreen> {
         _errorMessage = null;
       });
 
-      final jobPosting =
-          await _apiService.fetchJobPostingDetail(widget.jobPostingId);
+      final authProvider = Provider.of<AuthProvider>(context, listen: false);
+      final isSitter = authProvider.userType == 'SITTER';
+
+      final results = await Future.wait([
+        _apiService.fetchJobPostingDetail(widget.jobPostingId),
+        if (isSitter) _apiService.checkAlreadyApplied(widget.jobPostingId),
+      ]);
 
       if (mounted) {
         setState(() {
-          _jobPosting = jobPosting;
+          _jobPosting = results[0] as JobPosting;
+          if (isSitter) _hasApplied = results[1] as bool;
           _isLoading = false;
         });
       }
     } catch (e) {
-      print('게시글 상세 조회 오류: $e');
+      if (kDebugMode) print('게시글 상세 조회 오류: $e');
       if (mounted) {
         setState(() {
           _errorMessage = '게시글 정보를 불러올 수 없습니다';
@@ -112,12 +120,15 @@ class _JobPostingDetailScreenState extends State<JobPostingDetailScreen> {
     }
   }
 
-  void _navigateToApply() {
-    Navigator.pushNamed(
+  void _navigateToApply() async {
+    final applied = await Navigator.pushNamed(
       context,
       '/create_job_application',
       arguments: widget.jobPostingId,
     );
+    if (applied == true && mounted) {
+      setState(() => _hasApplied = true);
+    }
   }
 
   void _navigateToEdit() {
@@ -447,21 +458,21 @@ class _JobPostingDetailScreenState extends State<JobPostingDetailScreen> {
         ],
       );
     } else if (isSitter) {
-      // 시터 - Apply 버튼
+      // 시터 - Apply 버튼 (이미 지원한 경우 비활성화)
       return SizedBox(
         width: double.infinity,
         child: ElevatedButton(
-          onPressed: _navigateToApply,
+          onPressed: _hasApplied ? null : _navigateToApply,
           style: ElevatedButton.styleFrom(
             padding: const EdgeInsets.symmetric(vertical: 12),
-            backgroundColor: Colors.blue,
+            backgroundColor: _hasApplied ? Colors.grey[300] : Colors.blue,
           ),
-          child: const Text(
-            '지원하기',
+          child: Text(
+            _hasApplied ? '이미 지원한 공고입니다' : '지원하기',
             style: TextStyle(
               fontSize: 16,
               fontWeight: FontWeight.bold,
-              color: Colors.white,
+              color: _hasApplied ? Colors.grey[600] : Colors.white,
             ),
           ),
         ),

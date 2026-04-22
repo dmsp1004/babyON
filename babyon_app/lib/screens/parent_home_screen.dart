@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import '../providers/auth_provider.dart';
 import '../services/api_service.dart';
 import '../models/job_posting.dart';
+import 'parent_search_sitter_screen.dart';
 
 class ParentHomeScreen extends StatefulWidget {
   const ParentHomeScreen({Key? key}) : super(key: key);
@@ -136,6 +137,25 @@ class _ParentHomeScreenState extends State<ParentHomeScreen> {
                           },
                           icon: const Icon(Icons.people, size: 18),
                           label: const Text('지원자'),
+                          style: OutlinedButton.styleFrom(
+                            padding: const EdgeInsets.symmetric(vertical: 12),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: OutlinedButton.icon(
+                          onPressed: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (_) =>
+                                    const ParentSearchSitterScreen(),
+                              ),
+                            );
+                          },
+                          icon: const Icon(Icons.search, size: 18),
+                          label: const Text('시터 찾기'),
                           style: OutlinedButton.styleFrom(
                             padding: const EdgeInsets.symmetric(vertical: 12),
                           ),

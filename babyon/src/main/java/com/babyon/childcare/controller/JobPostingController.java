@@ -9,7 +9,9 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
+import jakarta.validation.Valid;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.Map;
@@ -40,21 +42,23 @@ public class JobPostingController {
     }
 
     // 구인글 생성
+    @PreAuthorize("hasRole('PARENT')")
     @PostMapping
     public ResponseEntity<JobPostingResponse> createJobPosting(
             Authentication authentication,
-            @RequestBody JobPostingRequest request) {
+            @Valid @RequestBody JobPostingRequest request) {
         String email = authentication.getName();
         JobPostingResponse response = jobPostingService.createJobPosting(email, request);
         return ResponseEntity.ok(response);
     }
 
     // 구인글 수정
+    @PreAuthorize("hasRole('PARENT')")
     @PutMapping("/{id}")
     public ResponseEntity<JobPostingResponse> updateJobPosting(
             Authentication authentication,
             @PathVariable("id") Long jobPostingId,
-            @RequestBody JobPostingRequest request) {
+            @Valid @RequestBody JobPostingRequest request) {
         String email = authentication.getName();
         JobPostingResponse response = jobPostingService.updateJobPosting(email, jobPostingId, request);
         return ResponseEntity.ok(response);
@@ -72,6 +76,7 @@ public class JobPostingController {
     }
 
     // 구인글 비활성화
+    @PreAuthorize("hasRole('PARENT')")
     @DeleteMapping("/{id}")
     public ResponseEntity<?> deactivateJobPosting(
             Authentication authentication,
@@ -100,6 +105,7 @@ public class JobPostingController {
     }
 
     // 내가 작성한 구인글 목록 조회
+    @PreAuthorize("hasRole('PARENT')")
     @GetMapping("/my-postings")
     public ResponseEntity<JobPostingListResponse> getMyJobPostings(
             Authentication authentication,

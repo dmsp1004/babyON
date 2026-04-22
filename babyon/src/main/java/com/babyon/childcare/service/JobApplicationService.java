@@ -3,6 +3,7 @@ package com.babyon.childcare.service;
 import com.babyon.childcare.dto.JobApplicationRequest;
 import com.babyon.childcare.dto.JobApplicationResponse;
 import com.babyon.childcare.entity.*;
+import com.babyon.childcare.exception.DuplicateApplicationException;
 import com.babyon.childcare.repository.JobApplicationRepository;
 import com.babyon.childcare.repository.JobPostingRepository;
 import com.babyon.childcare.repository.UserRepository;
@@ -56,7 +57,7 @@ public class JobApplicationService {
 
         // 이미 지원했는지 확인
         if (jobApplicationRepository.existsByJobPostingIdAndSitterId(jobPosting.getId(), sitter.getId())) {
-            throw new IllegalArgumentException("이미 해당 구인글에 지원하셨습니다.");
+            throw new DuplicateApplicationException(jobPosting.getId());
         }
 
         // 지원서 생성
@@ -191,6 +192,20 @@ public class JobApplicationService {
         return applications.stream()
                 .map(this::convertToJobApplicationResponse)
                 .collect(Collectors.toList());
+    }
+
+    // 특정 구인글에 이미 지원했는지 확인 (시터용)
+    @Transactional(readOnly = true)
+    public boolean hasAlreadyApplied(String email, Long jobPostingId) {
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new UsernameNotFoundException("해당 이메일의 사용자를 찾을 수 없습니다: " + email));
+
+        if (!(user instanceof Sitter)) {
+            return false;
+        }
+
+        Sitter sitter = (Sitter) user;
+        return jobApplicationRepository.existsByJobPostingIdAndSitterId(jobPostingId, sitter.getId());
     }
 
     // 부모의 구인글에 대한 모든 지원서 조회

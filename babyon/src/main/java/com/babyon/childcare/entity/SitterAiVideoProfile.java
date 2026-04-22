@@ -50,6 +50,12 @@ public class SitterAiVideoProfile {
     @Enumerated(EnumType.STRING)
     private ProfileStatus status = ProfileStatus.PENDING; // 이력서 상태
 
+    @Column(name = "ai_analysis_result", columnDefinition = "JSON")
+    private String aiAnalysisResult; // AI 분석 결과 (JSON)
+
+    @Column(name = "ai_analyzed_at")
+    private LocalDateTime aiAnalyzedAt; // AI 분석 완료 시각
+
     @Column(name = "view_count")
     private Integer viewCount = 0; // 조회수
 
@@ -63,9 +69,10 @@ public class SitterAiVideoProfile {
 
     // Enum for profile status
     public enum ProfileStatus {
-        PENDING,    // 대기 중 (업로드 진행 중)
-        ACTIVE,     // 활성화 (공개)
-        INACTIVE,   // 비활성화 (비공개)
-        REVIEWING   // 검토 중 (관리자 승인 대기)
+        PENDING,    // 대기 중 (업로드 완료, AI 분석 전)
+        ANALYZING,  // AI 분석 진행 중
+        ACTIVE,     // 활성화 (AI 분석 완료, 공개)
+        INACTIVE,   // 비활성화 (AI가 부적합 판정)
+        REVIEWING   // 검토 중 (AI 분석 불확실, 관리자 확인 필요)
     }
 }

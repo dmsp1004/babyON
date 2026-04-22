@@ -153,6 +153,20 @@ public class SitterAiProfileController {
     }
 
     /**
+     * AI 화상 이력서 롤백 (업로드 실패 시 호출)
+     * 부분 저장된 DB 레코드와 S3 파일을 정리한다.
+     */
+    @DeleteMapping("/ai-profile/rollback")
+    @Operation(summary = "AI 화상 이력서 롤백", description = "업로드 실패 후 부분 저장된 데이터를 정리합니다")
+    public ResponseEntity<Void> rollbackProfile(Authentication authentication) {
+        authenticationHelper.validateSitterRole(authentication);
+        Long sitterId = authenticationHelper.getUserId(authentication);
+        log.info("Rolling back AI video profile for sitter: {}", sitterId);
+        aiVideoProfileService.rollbackProfile(sitterId);
+        return ResponseEntity.noContent().build();
+    }
+
+    /**
      * AI 화상 이력서 존재 여부 확인 (내 프로필)
      * 인증된 시터가 본인의 AI 화상 이력서 등록 여부를 확인합니다.
      *

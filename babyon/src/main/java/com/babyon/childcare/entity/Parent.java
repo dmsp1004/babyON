@@ -13,6 +13,9 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 public class Parent extends User {
 
+    @Column(nullable = false)
+    private Long version = 0L;
+
     @Column(name = "number_of_children")
     private Integer numberOfChildren;
 

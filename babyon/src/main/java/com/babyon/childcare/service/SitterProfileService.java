@@ -141,6 +141,34 @@ public class SitterProfileService {
     }
 
     /**
+     * Delete experience from sitter
+     */
+    @Transactional
+    public void deleteExperience(Long sitterId, Long experienceId) {
+        SitterExperience experience = experienceRepository.findById(experienceId)
+                .orElseThrow(() -> new RuntimeException("Experience not found"));
+
+        if (!experience.getSitter().getId().equals(sitterId)) {
+            throw new RuntimeException("해당 경력에 대한 접근 권한이 없습니다");
+        }
+
+        experienceRepository.delete(experience);
+    }
+
+    /**
+     * Delete certification from sitter
+     */
+    @Transactional
+    public void deleteCertification(Long sitterId, Long certificationId) {
+        SitterCertification cert = certificationRepository.findById(certificationId)
+                .orElseThrow(() -> new RuntimeException("Certification not found"));
+        if (!cert.getSitter().getId().equals(sitterId)) {
+            throw new RuntimeException("해당 자격증에 대한 접근 권한이 없습니다");
+        }
+        certificationRepository.delete(cert);
+    }
+
+    /**
      * Add available time to sitter
      */
     @Transactional
@@ -157,6 +185,19 @@ public class SitterProfileService {
 
         SitterAvailableTime saved = availableTimeRepository.save(availableTime);
         return toAvailableTimeResponse(saved);
+    }
+
+    /**
+     * Delete available time from sitter
+     */
+    @Transactional
+    public void deleteAvailableTime(Long sitterId, Long availableTimeId) {
+        SitterAvailableTime time = availableTimeRepository.findById(availableTimeId)
+                .orElseThrow(() -> new RuntimeException("Available time not found"));
+        if (!time.getSitter().getId().equals(sitterId)) {
+            throw new RuntimeException("해당 근무 가능 시간에 대한 접근 권한이 없습니다");
+        }
+        availableTimeRepository.delete(time);
     }
 
     /**
@@ -177,6 +218,19 @@ public class SitterProfileService {
 
         SitterServiceArea saved = serviceAreaRepository.save(serviceArea);
         return toServiceAreaResponse(saved);
+    }
+
+    /**
+     * Delete service area from sitter
+     */
+    @Transactional
+    public void deleteServiceArea(Long sitterId, Long serviceAreaId) {
+        SitterServiceArea area = serviceAreaRepository.findById(serviceAreaId)
+                .orElseThrow(() -> new RuntimeException("Service area not found"));
+        if (!area.getSitter().getId().equals(sitterId)) {
+            throw new RuntimeException("해당 서비스 지역에 대한 접근 권한이 없습니다");
+        }
+        serviceAreaRepository.delete(area);
     }
 
     // Helper methods

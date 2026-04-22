@@ -129,6 +129,16 @@ public class GlobalExceptionHandler {
     }
 
     /**
+     * 중복 지원
+     */
+    @ExceptionHandler(DuplicateApplicationException.class)
+    public ResponseEntity<ErrorResponse> handleDuplicateApplication(DuplicateApplicationException e) {
+        log.warn("Duplicate application: {}", e.getMessage());
+        ErrorResponse response = ErrorResponse.of(e.getErrorCode(), e.getMessage());
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(response);
+    }
+
+    /**
      * 비즈니스 예외 (기타)
      */
     @ExceptionHandler(BusinessException.class)

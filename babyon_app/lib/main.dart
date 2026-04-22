@@ -22,6 +22,7 @@ import 'screens/create_job_application_screen.dart';
 import 'screens/sitter_profile_edit_screen.dart';
 import 'screens/parent_profile_screen.dart';
 import 'screens/ai_video_resume_flow_screen.dart';
+import 'screens/parent_search_sitter_screen.dart';
 import 'models/job_posting.dart';
 
 
@@ -193,6 +194,7 @@ class MyApp extends StatelessWidget {
                 '/sitter_profile_edit': (context) => const SitterProfileEditScreen(),
                 '/parent_profile': (context) => const ParentProfileScreen(),
                 '/ai_video_resume': (context) => const AiVideoResumeFlowScreen(),
+                '/search_sitter': (context) => const ParentSearchSitterScreen(),
 
                 // OAuth 콜백 및 비밀번호 찾기 화면은 임시로 제거 (구현 필요)
                 // '/oauth/callback': (context) => const OAuthCallbackScreen(),

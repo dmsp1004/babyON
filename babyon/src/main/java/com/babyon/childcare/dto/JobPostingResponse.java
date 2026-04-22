@@ -22,6 +22,7 @@ public class JobPostingResponse {
     private LocalDateTime startDate; // 시작 날짜/시간
     private LocalDateTime endDate; // 종료 날짜/시간
     private Double hourlyRate; // 시간당 급여
+    private String payType;   // 급여 타입 (HOURLY, DAILY, MONTHLY)
     private Integer requiredExperienceYears; // 요구 경력 연수
     private String jobType; // 구인 유형
     private String ageOfChildren; // 아이 나이

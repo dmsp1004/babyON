@@ -1,6 +1,7 @@
 import 'package:dio/dio.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:flutter/foundation.dart' show kIsWeb, kDebugMode;
+import 'dart:async';
 import 'dart:io' show Platform;
 import 'dart:math';
 import '../models/job_posting.dart';
@@ -13,6 +14,10 @@ class ApiService {
 
   late Dio _dio;
   final FlutterSecureStorage _secureStorage = const FlutterSecureStorage();
+
+  // Race condition 방지: 동시에 401이 여러 요청에서 발생할 때 refresh를 한 번만 실행
+  bool _isRefreshing = false;
+  final List<Completer<bool>> _refreshQueue = [];
 
   // OAuth2 관련 설정
   final String _clientId = 'childcare-client';
@@ -97,22 +102,137 @@ class ApiService {
           }
           return handler.next(response);
         },
-        onError: (error, handler) {
+        onError: (error, handler) async {
           if (kDebugMode) {
             print('오류: ${error.message}');
             if (error.response != null) {
               print('오류 응답: ${error.response?.data}');
             }
           }
-          // 401 에러 처리 (토큰 만료 등)
-          if (error.response?.statusCode == 401) {
-            // 토큰 삭제
-            _secureStorage.delete(key: 'auth_token');
+
+          if (error.response?.statusCode != 401) {
+            // 백엔드 ErrorResponse { errorCode, message } 파싱
+            final statusCode = error.response?.statusCode;
+            final responseData = error.response?.data;
+
+            String? backendMessage;
+            if (responseData is Map) {
+              backendMessage = responseData['message'] as String?;
+            }
+
+            final koreanMessage = _mapStatusToKorean(statusCode, backendMessage);
+
+            return handler.next(
+              DioException(
+                requestOptions: error.requestOptions,
+                response: error.response,
+                type: error.type,
+                error: koreanMessage,
+                message: koreanMessage,
+              ),
+            );
           }
-          return handler.next(error);
+
+          // 인증 엔드포인트 자체에서 온 401은 갱신 시도 없이 그대로 전파
+          final path = error.requestOptions.path;
+          if (path.contains('/auth/login') ||
+              path.contains('/auth/register') ||
+              path.contains('/auth/refresh-token')) {
+            return handler.next(error);
+          }
+
+          // 이미 갱신 중인 경우 → 대기열에 추가 후 결과를 기다림
+          if (_isRefreshing) {
+            final completer = Completer<bool>();
+            _refreshQueue.add(completer);
+            final success = await completer.future;
+            if (success) {
+              try {
+                final retryResponse = await _dio.fetch(error.requestOptions);
+                return handler.resolve(retryResponse);
+              } catch (e) {
+                return handler.next(error);
+              }
+            }
+            return handler.next(error);
+          }
+
+          // 갱신 시작
+          _isRefreshing = true;
+          try {
+            final refreshToken = await _secureStorage.read(key: 'refresh_token');
+            if (refreshToken == null) {
+              _notifyQueue(false);
+              await _clearTokens();
+              return handler.next(error);
+            }
+
+            // 별도 Dio 인스턴스로 refresh 호출 (인터셉터 무한루프 방지)
+            final refreshDio = Dio(BaseOptions(baseUrl: _baseUrl));
+            final refreshResponse = await refreshDio.post(
+              '/v1/auth/refresh-token',
+              data: {'refreshToken': refreshToken},
+            );
+
+            await _secureStorage.write(
+              key: 'auth_token',
+              value: refreshResponse.data['token'] as String,
+            );
+            await _secureStorage.write(
+              key: 'refresh_token',
+              value: refreshResponse.data['refreshToken'] as String,
+            );
+
+            _notifyQueue(true);
+
+            // 원래 요청 재시도
+            final retryResponse = await _dio.fetch(error.requestOptions);
+            return handler.resolve(retryResponse);
+          } catch (e) {
+            _notifyQueue(false);
+            await _clearTokens();
+            return handler.next(error);
+          } finally {
+            _isRefreshing = false;
+          }
         },
       ),
     );
+  }
+
+  void _notifyQueue(bool success) {
+    for (final completer in _refreshQueue) {
+      completer.complete(success);
+    }
+    _refreshQueue.clear();
+  }
+
+  Future<void> _clearTokens() async {
+    await _secureStorage.delete(key: 'auth_token');
+    await _secureStorage.delete(key: 'refresh_token');
+  }
+
+  String _mapStatusToKorean(int? statusCode, String? backendMessage) {
+    switch (statusCode) {
+      case 400:
+        return backendMessage ?? '잘못된 요청입니다';
+      case 401:
+        return '로그인이 필요합니다';
+      case 403:
+        return '접근 권한이 없습니다';
+      case 404:
+        return backendMessage ?? '요청한 정보를 찾을 수 없습니다';
+      case 409:
+        return backendMessage ?? '이미 존재하는 정보입니다';
+      case 422:
+        return backendMessage ?? '입력값을 확인해주세요';
+      case 500:
+      case 502:
+      case 503:
+        return '서버 오류가 발생했습니다. 잠시 후 다시 시도해주세요';
+      default:
+        return backendMessage ?? '오류가 발생했습니다 (${statusCode ?? '알 수 없음'})';
+    }
   }
 
   // _dio 객체에 접근할 수 있는 getter 메서드 추가
@@ -133,10 +253,13 @@ class ApiService {
         data: {'email': email, 'password': password},
       );
 
-      // 토큰 저장
       await _secureStorage.write(
         key: 'auth_token',
-        value: response.data['token'],
+        value: response.data['token'] as String,
+      );
+      await _secureStorage.write(
+        key: 'refresh_token',
+        value: response.data['refreshToken'] as String,
       );
 
       return response.data;
@@ -177,11 +300,16 @@ class ApiService {
         data: {'code': code, 'redirect_uri': _redirectUri},
       );
 
-      // 토큰 저장
       await _secureStorage.write(
         key: 'auth_token',
-        value: response.data['token'],
+        value: response.data['token'] as String,
       );
+      if (response.data['refreshToken'] != null) {
+        await _secureStorage.write(
+          key: 'refresh_token',
+          value: response.data['refreshToken'] as String,
+        );
+      }
 
       return response.data;
     } catch (e) {
@@ -226,10 +354,13 @@ class ApiService {
         },
       );
 
-      // 토큰 저장
       await _secureStorage.write(
         key: 'auth_token',
-        value: response.data['token'],
+        value: response.data['token'] as String,
+      );
+      await _secureStorage.write(
+        key: 'refresh_token',
+        value: response.data['refreshToken'] as String,
       );
 
       return response.data;
@@ -243,14 +374,18 @@ class ApiService {
 
   // 로그아웃 메서드
   Future<void> logout() async {
+    final refreshToken = await _secureStorage.read(key: 'refresh_token');
     try {
-      await _dio.post('/v1/auth/logout');
+      await _dio.post(
+        '/v1/auth/logout',
+        data: refreshToken != null ? {'refreshToken': refreshToken} : {},
+      );
     } catch (e) {
       if (kDebugMode) {
         print('로그아웃 API 오류: $e');
       }
     } finally {
-      await _secureStorage.delete(key: 'auth_token');
+      await _clearTokens();
     }
   }
 
@@ -702,6 +837,58 @@ class ApiService {
     }
   }
 
+  // 경력 삭제
+  Future<void> deleteExperience({
+    required int sitterId,
+    required int experienceId,
+  }) async {
+    try {
+      await _dio.delete('/sitter-profiles/$sitterId/experiences/$experienceId');
+    } catch (e) {
+      if (kDebugMode) print('경력 삭제 오류: $e');
+      rethrow;
+    }
+  }
+
+  // 자격증 삭제
+  Future<void> deleteCertification({
+    required int sitterId,
+    required int certificationId,
+  }) async {
+    try {
+      await _dio.delete('/sitter-profiles/$sitterId/certifications/$certificationId');
+    } catch (e) {
+      if (kDebugMode) print('자격증 삭제 오류: $e');
+      rethrow;
+    }
+  }
+
+  // 가능 시간대 삭제
+  Future<void> deleteAvailableTime({
+    required int sitterId,
+    required int availableTimeId,
+  }) async {
+    try {
+      await _dio.delete('/sitter-profiles/$sitterId/available-times/$availableTimeId');
+    } catch (e) {
+      if (kDebugMode) print('가능 시간대 삭제 오류: $e');
+      rethrow;
+    }
+  }
+
+  // 서비스 지역 삭제
+  Future<void> deleteServiceArea({
+    required int sitterId,
+    required int serviceAreaId,
+  }) async {
+    try {
+      await _dio.delete('/sitter-profiles/$sitterId/service-areas/$serviceAreaId');
+    } catch (e) {
+      if (kDebugMode) print('서비스 지역 삭제 오류: $e');
+      rethrow;
+    }
+  }
+
   // 가능 시간대 추가
   Future<SitterAvailableTime> addAvailableTime({
     required int sitterId,
@@ -881,6 +1068,16 @@ class ApiService {
     }
   }
 
+  /// AI 화상 이력서 롤백 (업로드 실패 후 부분 저장 데이터 정리)
+  Future<void> rollbackAiVideoProfile() async {
+    try {
+      await _dio.delete('/v1/sitter/ai-profile/rollback');
+    } catch (e) {
+      if (kDebugMode) print('AI 화상 이력서 롤백 오류: $e');
+      rethrow;
+    }
+  }
+
   /// 내 AI 화상 이력서 조회
   Future<Map<String, dynamic>> getMyAiVideoProfile() async {
     try {
@@ -917,6 +1114,17 @@ class ApiService {
         print('AI 화상 이력서 존재 여부 확인 오류: $e');
       }
       rethrow;
+    }
+  }
+
+  /// 특정 구인글에 이미 지원했는지 확인 (시터용)
+  Future<bool> checkAlreadyApplied(int jobPostingId) async {
+    try {
+      final response = await _dio.get('/job-applications/check/$jobPostingId');
+      return (response.data as Map<String, dynamic>)['hasApplied'] as bool;
+    } catch (e) {
+      if (kDebugMode) print('지원 여부 확인 오류: $e');
+      return false;
     }
   }
 }

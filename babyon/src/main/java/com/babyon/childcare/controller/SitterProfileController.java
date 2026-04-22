@@ -7,6 +7,7 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
+import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
@@ -31,7 +32,7 @@ public class SitterProfileController {
     @Operation(summary = "시터 프로필 수정", description = "시터 프로필을 수정합니다")
     public ResponseEntity<SitterProfileResponse> updateProfile(
             @PathVariable Long sitterId,
-            @RequestBody SitterProfileRequest request,
+            @Valid @RequestBody SitterProfileRequest request,
             Authentication authentication) {
         // 인증된 사용자가 해당 시터인지 검증
         authenticationHelper.validateResourceAccess(authentication, sitterId);
@@ -81,13 +82,22 @@ public class SitterProfileController {
     @Operation(summary = "자격증 추가", description = "시터의 자격증을 추가합니다")
     public ResponseEntity<SitterCertificationResponse> addCertification(
             @PathVariable Long sitterId,
-            @RequestBody SitterCertificationRequest request,
+            @Valid @RequestBody SitterCertificationRequest request,
             Authentication authentication) {
-        // 인증된 사용자가 해당 시터인지 검증
         authenticationHelper.validateResourceAccess(authentication, sitterId);
-
         SitterCertificationResponse response = sitterProfileService.addCertification(sitterId, request);
         return ResponseEntity.ok(response);
+    }
+
+    @DeleteMapping("/{sitterId}/certifications/{certificationId}")
+    @Operation(summary = "자격증 삭제", description = "시터의 자격증을 삭제합니다")
+    public ResponseEntity<Void> deleteCertification(
+            @PathVariable Long sitterId,
+            @PathVariable Long certificationId,
+            Authentication authentication) {
+        authenticationHelper.validateResourceAccess(authentication, sitterId);
+        sitterProfileService.deleteCertification(sitterId, certificationId);
+        return ResponseEntity.noContent().build();
     }
 
     // Experience endpoints
@@ -96,7 +106,7 @@ public class SitterProfileController {
     @Operation(summary = "경력 추가", description = "시터의 경력을 추가합니다")
     public ResponseEntity<SitterExperienceResponse> addExperience(
             @PathVariable Long sitterId,
-            @RequestBody SitterExperienceRequest request,
+            @Valid @RequestBody SitterExperienceRequest request,
             Authentication authentication) {
         // 인증된 사용자가 해당 시터인지 검증
         authenticationHelper.validateResourceAccess(authentication, sitterId);
@@ -105,33 +115,60 @@ public class SitterProfileController {
         return ResponseEntity.ok(response);
     }
 
+    @DeleteMapping("/{sitterId}/experiences/{experienceId}")
+    @Operation(summary = "경력 삭제", description = "시터의 경력을 삭제합니다")
+    public ResponseEntity<Void> deleteExperience(
+            @PathVariable Long sitterId,
+            @PathVariable Long experienceId,
+            Authentication authentication) {
+        authenticationHelper.validateResourceAccess(authentication, sitterId);
+        sitterProfileService.deleteExperience(sitterId, experienceId);
+        return ResponseEntity.noContent().build();
+    }
+
     // Available time endpoints
 
     @PostMapping("/{sitterId}/available-times")
     @Operation(summary = "가능 시간 추가", description = "시터의 가능한 시간대를 추가합니다")
     public ResponseEntity<SitterAvailableTimeResponse> addAvailableTime(
             @PathVariable Long sitterId,
-            @RequestBody SitterAvailableTimeRequest request,
+            @Valid @RequestBody SitterAvailableTimeRequest request,
             Authentication authentication) {
-        // 인증된 사용자가 해당 시터인지 검증
         authenticationHelper.validateResourceAccess(authentication, sitterId);
-
         SitterAvailableTimeResponse response = sitterProfileService.addAvailableTime(sitterId, request);
         return ResponseEntity.ok(response);
     }
 
-    // Service area endpoints
+    @DeleteMapping("/{sitterId}/available-times/{availableTimeId}")
+    @Operation(summary = "가능 시간 삭제", description = "시터의 가능한 시간대를 삭제합니다")
+    public ResponseEntity<Void> deleteAvailableTime(
+            @PathVariable Long sitterId,
+            @PathVariable Long availableTimeId,
+            Authentication authentication) {
+        authenticationHelper.validateResourceAccess(authentication, sitterId);
+        sitterProfileService.deleteAvailableTime(sitterId, availableTimeId);
+        return ResponseEntity.noContent().build();
+    }
 
     @PostMapping("/{sitterId}/service-areas")
     @Operation(summary = "서비스 지역 추가", description = "시터의 서비스 가능 지역을 추가합니다")
     public ResponseEntity<SitterServiceAreaResponse> addServiceArea(
             @PathVariable Long sitterId,
-            @RequestBody SitterServiceAreaRequest request,
+            @Valid @RequestBody SitterServiceAreaRequest request,
             Authentication authentication) {
-        // 인증된 사용자가 해당 시터인지 검증
         authenticationHelper.validateResourceAccess(authentication, sitterId);
-
         SitterServiceAreaResponse response = sitterProfileService.addServiceArea(sitterId, request);
         return ResponseEntity.ok(response);
+    }
+
+    @DeleteMapping("/{sitterId}/service-areas/{serviceAreaId}")
+    @Operation(summary = "서비스 지역 삭제", description = "시터의 서비스 가능 지역을 삭제합니다")
+    public ResponseEntity<Void> deleteServiceArea(
+            @PathVariable Long sitterId,
+            @PathVariable Long serviceAreaId,
+            Authentication authentication) {
+        authenticationHelper.validateResourceAccess(authentication, sitterId);
+        sitterProfileService.deleteServiceArea(sitterId, serviceAreaId);
+        return ResponseEntity.noContent().build();
     }
 }

@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:babyon_app/screens/job_posting_list_screen.dart';
 import 'package:provider/provider.dart';
 import '../../providers/auth_provider.dart';
 import 'package:app_links/app_links.dart';
@@ -190,15 +189,19 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
 
   void _navigateBasedOnUserType(String userType) {
     if (!mounted) return;
-    print('유형에 따른 화면 이동 시작: $userType');
+
+    final route = switch (userType) {
+      'PARENT' => '/parent_home',
+      'SITTER' => '/sitter_home',
+      'ADMIN'  => '/admin_home',
+      _        => '/home',
+    };
 
     Navigator.pushNamedAndRemoveUntil(
       context,
-      '/job_postings',
+      route,
       (route) => false,
     );
-
-    print('사용자 유형: $userType - 구인구직 게시판으로 이동 완료');
   }
 
   @override

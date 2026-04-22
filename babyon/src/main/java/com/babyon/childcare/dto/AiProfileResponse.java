@@ -25,6 +25,8 @@ public class AiProfileResponse {
     private String answerVideoUrl;
     private Integer answerVideoDurationSeconds;
     private String status;
+    private String aiAnalysisResult; // AI 분석 결과 JSON
+    private LocalDateTime aiAnalyzedAt; // AI 분석 완료 시각
     private Integer viewCount;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
@@ -42,6 +44,8 @@ public class AiProfileResponse {
                 .answerVideoUrl(profile.getAnswerVideoUrl())
                 .answerVideoDurationSeconds(profile.getAnswerVideoDurationSeconds())
                 .status(profile.getStatus() != null ? profile.getStatus().name() : null)
+                .aiAnalysisResult(profile.getAiAnalysisResult())
+                .aiAnalyzedAt(profile.getAiAnalyzedAt())
                 .viewCount(profile.getViewCount())
                 .createdAt(profile.getCreatedAt())
                 .updatedAt(profile.getUpdatedAt())

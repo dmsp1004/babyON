@@ -34,6 +34,7 @@ public class SitterAiVideoProfileService {
     private final AiQuestionRepository aiQuestionRepository;
     private final SitterRepository sitterRepository;
     private final S3Service s3Service;
+    private final AiAnalysisService aiAnalysisService;
 
     private static final int MAX_VIDEO_DURATION_SECONDS = 120; // 최대 영상 길이: 120초
     private static final long MAX_VIDEO_FILE_SIZE_BYTES = 100 * 1024 * 1024; // 최대 파일 크기: 100MB
@@ -112,7 +113,7 @@ public class SitterAiVideoProfileService {
             profile.setStatus(SitterAiVideoProfile.ProfileStatus.PENDING);
         }
 
-        // 8. DB 저장
+        // 8. DB 저장 (상태: PENDING)
         SitterAiVideoProfile savedProfile = aiVideoProfileRepository.save(profile);
 
         // 9. AI 질문 사용 횟수 증가
@@ -120,6 +121,11 @@ public class SitterAiVideoProfileService {
         aiQuestionRepository.save(aiQuestion);
 
         log.info("AI video profile uploaded successfully for sitter: {}", sitterId);
+
+        // 10. S3 업로드 완료 후 AI 분석 비동기 트리거
+        //     - 별도 스레드(aiAnalysisExecutor)에서 실행되므로 이 응답을 블로킹하지 않는다.
+        //     - 분석 완료 시 상태가 PENDING → ANALYZING → ACTIVE/REVIEWING/INACTIVE 로 전환된다.
+        aiAnalysisService.triggerAnalysis(sitterId, introVideoUrl, answerVideoUrl);
 
         return AiProfileResponse.fromEntity(savedProfile);
     }
@@ -149,6 +155,31 @@ public class SitterAiVideoProfileService {
      */
     public boolean hasProfile(Long sitterId) {
         return aiVideoProfileRepository.existsBySitterId(sitterId);
+    }
+
+    /**
+     * 업로드 실패 후 롤백 — DB 레코드 삭제 및 S3 파일 정리
+     * Flutter 클라이언트가 업로드 실패 시 호출하여 부분 저장된 데이터를 제거한다.
+     */
+    @Transactional
+    public void rollbackProfile(Long sitterId) {
+        aiVideoProfileRepository.findBySitterId(sitterId).ifPresent(profile -> {
+            // S3 파일 삭제 (실패해도 DB 삭제는 계속 진행)
+            safeDeleteFromS3(profile.getIntroVideoUrl());
+            safeDeleteFromS3(profile.getAnswerVideoUrl());
+
+            aiVideoProfileRepository.delete(profile);
+            log.info("AI video profile rolled back for sitter: {}", sitterId);
+        });
+    }
+
+    private void safeDeleteFromS3(String s3Key) {
+        if (s3Key == null || s3Key.isBlank()) return;
+        try {
+            s3Service.deleteFile(s3Key);
+        } catch (Exception e) {
+            log.warn("S3 파일 삭제 실패 (롤백 중 무시): key={}, error={}", s3Key, e.getMessage());
+        }
     }
 
     // ========================= Private Helper Methods =========================
